@@ -56,7 +56,7 @@ const createAccessToken = (user: IUser) => {
 const createRefreshTokenValue = () => randomBytes(48).toString('base64url');
 
 const createRefreshTokenExpiresAt = () =>
-    new Date(Date.now() + bootEnv.JWT_USER_JWT_USER_REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000);
+    new Date(Date.now() + bootEnv.JWT_USER_REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000);
 
 const createRefreshToken = async (user: IUser) => {
     const refreshToken = createRefreshTokenValue();

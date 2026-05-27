@@ -33,9 +33,7 @@ export const bootEnv = {
     JWT_ISSUER: process.env.JWT_ISSUER || 'authenticator',
     JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'governify-next',
     JWT_USER_EXPIRES_IN: process.env.JWT_USER_EXPIRES_IN || '15m',
-    JWT_USER_JWT_USER_REFRESH_TOKEN_DAYS: Number(
-        process.env.JWT_USER_JWT_USER_REFRESH_TOKEN_DAYS || '7',
-    ),
+    JWT_USER_REFRESH_TOKEN_DAYS: Number(process.env.JWT_USER_REFRESH_TOKEN_DAYS || '7'),
     JWT_SERVICE_EXPIRES_IN: process.env.JWT_SERVICE_EXPIRES_IN || '15m',
 
     // OpenID Connect configuration
