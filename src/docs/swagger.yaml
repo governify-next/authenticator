@@ -3,7 +3,7 @@ info:
     title: Authenticator API
     version: 1.0.0
     description: |
-        REST API for user identity, login and OpenID Connect authentication.
+        REST API for user identity, login, OpenID Connect and service authentication.
 servers:
     - url: /
 
@@ -12,6 +12,8 @@ tags:
       description: Server health check
     - name: Users
       description: User and authentication management
+    - name: Services
+      description: Service client authentication. Clients are provisioned at startup from environment variables.
 
 paths:
     /health:
@@ -40,7 +42,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns an array with all users in the system.
-                Requires admin role to access.
+                Requires a user token with ADMIN role.
             responses:
                 '200':
                     description: A list of users
@@ -70,7 +72,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Creates a new user with the provided credentials.
-                Requires admin role to create users.
+                Requires a user token with ADMIN role.
             requestBody:
                 required: true
                 content:
@@ -108,7 +110,7 @@ paths:
             operationId: getCurrentUser
             security:
                 - BearerAuth: []
-            description: Returns the authenticated user from the access token.
+            description: Requires a user token. Returns the authenticated user from the access token.
             responses:
                 '200':
                     description: Current user found
@@ -135,6 +137,7 @@ paths:
             security:
                 - BearerAuth: []
             description: |
+                Requires a user token.
                 Changes the authenticated user's password after validating the current password.
                 All active refresh-token sessions are deleted after a successful password change.
             requestBody:
@@ -172,7 +175,7 @@ paths:
             operationId: getCurrentUserSessions
             security:
                 - BearerAuth: []
-            description: Returns the active refresh-token sessions for the authenticated user.
+            description: Requires a user token. Returns the active refresh-token sessions for the authenticated user.
             responses:
                 '200':
                     description: Active sessions retrieved successfully
@@ -198,7 +201,7 @@ paths:
             operationId: deleteCurrentUserSessions
             security:
                 - BearerAuth: []
-            description: Deletes all active refresh-token sessions for the authenticated user.
+            description: Requires a user token. Deletes all active refresh-token sessions for the authenticated user.
             responses:
                 '200':
                     description: Sessions deleted successfully
@@ -226,7 +229,7 @@ paths:
             operationId: deleteCurrentUserSession
             security:
                 - BearerAuth: []
-            description: Deletes one active refresh-token session for the authenticated user.
+            description: Requires a user token. Deletes one active refresh-token session for the authenticated user.
             parameters:
                 - in: path
                   name: id
@@ -274,7 +277,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns a specific user by their username.
-                Requires admin role to access.
+                Requires a user token with ADMIN role or a valid service token.
             responses:
                 '200':
                     description: User found
@@ -304,7 +307,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Updates an existing user's information by username.
-                Requires admin role to update users.
+                Requires a user token with ADMIN role.
             requestBody:
                 required: true
                 content:
@@ -342,7 +345,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Deletes a user from the system by username.
-                Requires admin role to delete users.
+                Requires a user token with ADMIN role.
             responses:
                 '200':
                     description: User deleted successfully
@@ -385,7 +388,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns a specific user by their MongoDB ObjectId.
-                Requires admin role to access.
+                Requires a user token with ADMIN role or a valid service token.
             responses:
                 '200':
                     description: User found
@@ -417,7 +420,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Updates an existing user's information by MongoDB ObjectId.
-                Requires admin role to update users.
+                Requires a user token with ADMIN role.
             requestBody:
                 required: true
                 content:
@@ -455,7 +458,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Deletes a user from the system by MongoDB ObjectId.
-                Requires admin role to delete users.
+                Requires a user token with ADMIN role.
             responses:
                 '200':
                     description: User deleted successfully
@@ -656,13 +659,118 @@ paths:
                 '500':
                     $ref: '#/components/responses/InternalError'
 
+    /api/v1/services/token:
+        post:
+            tags:
+                - Services
+            summary: Create service access token
+            operationId: createServiceToken
+            description: |
+                Validates service client credentials and returns a short-lived JWT for service-to-service calls.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ServiceTokenInput'
+            responses:
+                '200':
+                    description: Service token created successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/ServiceToken'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/services/clients:
+        get:
+            tags:
+                - Services
+            summary: List service clients
+            operationId: getServiceClients
+            security:
+                - BearerAuth: []
+            description: |
+                Returns all service clients.
+                Requires a user token with ADMIN role.
+            responses:
+                '200':
+                    description: A list of service clients
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/ServiceClient'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/services/clients/{clientId}:
+        parameters:
+            - in: path
+              name: clientId
+              required: true
+              schema:
+                  type: string
+              description: Service client identifier
+              example: scope-manager
+        get:
+            tags:
+                - Services
+            summary: Get service client by client id
+            operationId: getServiceClientByClientId
+            security:
+                - BearerAuth: []
+            description: |
+                Returns one service client by its client id.
+                Requires a user token with ADMIN role.
+            responses:
+                '200':
+                    description: Service client found
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/ServiceClient'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
 components:
     securitySchemes:
         BearerAuth:
             type: http
             scheme: bearer
             bearerFormat: JWT
-            description: JWT access token obtained via POST /api/v1/users/login
+            description: User JWT obtained via POST /api/v1/users/login or service JWT obtained via POST /api/v1/services/token, depending on the endpoint.
 
     responses:
         ValidationError:
@@ -880,7 +988,7 @@ components:
             properties:
                 token:
                     type: string
-                    description: JWT access token with sub, iss, aud, exp and jti claims
+                    description: JWT access token with type=user, sub, iss, aud, exp and jti claims
                     example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                 refreshToken:
                     type: string
@@ -907,3 +1015,46 @@ components:
                 expiresAt:
                     type: string
                     format: date-time
+
+        ServiceClient:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    description: MongoDB ObjectId
+                    example: 665c2d3e4f5a6b7c8d9e0f1a
+                clientId:
+                    type: string
+                    example: scope-manager
+                lastUsedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                createdAt:
+                    type: string
+                    format: date-time
+                updatedAt:
+                    type: string
+                    format: date-time
+
+        ServiceTokenInput:
+            type: object
+            required:
+                - clientId
+                - clientSecret
+            properties:
+                clientId:
+                    type: string
+                    example: scope-manager
+                clientSecret:
+                    type: string
+                    format: password
+                    example: scope_manager_client_secret
+
+        ServiceToken:
+            type: object
+            properties:
+                token:
+                    type: string
+                    description: JWT service token with type=service, sub, iss, aud, exp, jti and service claims
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...

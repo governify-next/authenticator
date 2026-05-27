@@ -19,12 +19,21 @@ export const bootEnv = {
     DEFAULT_ADMIN_USERNAME: process.env.DEFAULT_ADMIN_USERNAME || 'admin',
     DEFAULT_ADMIN_PASSWORD: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
 
+    // Default service clients
+    SCOPE_MANAGER_CLIENT_SECRET:
+        process.env.SCOPE_MANAGER_CLIENT_SECRET || 'scope_manager_client_secret',
+    REGISTRY_CLIENT_SECRET: process.env.REGISTRY_CLIENT_SECRET || 'registry_client_secret',
+    COMPUTER_CLIENT_SECRET: process.env.COMPUTER_CLIENT_SECRET || 'computer_client_secret',
+    FETCHER_CLIENT_SECRET: process.env.FETCHER_CLIENT_SECRET || 'fetcher_client_secret',
+    REPORTER_CLIENT_SECRET: process.env.REPORTER_CLIENT_SECRET || 'reporter_client_secret',
+    DIRECTOR_CLIENT_SECRET: process.env.DIRECTOR_CLIENT_SECRET || 'director_client_secret',
+
     // JWT configuration
-    USER_AUTHENTICATION_ENABLED: process.env.USER_AUTHENTICATION_ENABLED === 'true',
     JWT_SECRET: process.env.JWT_SECRET || 'governify_next_secret_key',
     JWT_ISSUER: process.env.JWT_ISSUER || 'authenticator',
     JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'governify-next',
-    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    JWT_USER_EXPIRES_IN: process.env.JWT_USER_EXPIRES_IN || '15m',
+    JWT_SERVICE_EXPIRES_IN: process.env.JWT_SERVICE_EXPIRES_IN || '15m',
     REFRESH_TOKEN_DAYS: Number(process.env.REFRESH_TOKEN_DAYS || '7'),
 
     // OpenID Connect configuration

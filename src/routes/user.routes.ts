@@ -9,7 +9,12 @@ import {
 } from '../middlewares/user.validator.js';
 import { validateOidcEnabled } from '../middlewares/oidc.validator.js';
 import { validateMongoId } from '../middlewares/mongoId.validator.js';
-import { checkUserAuthentication, hasRole } from '../middlewares/user.authenticator.js';
+import {
+    checkUserAuthentication,
+    checkUserOrServiceAuthentication,
+    hasRoleOrService,
+    hasRole,
+} from '../middlewares/authenticator.validator.js';
 import { SystemRole } from '../types/systemRole.js';
 
 export const userRoutes = Router();
@@ -58,8 +63,8 @@ userRoutes.delete(
 
 userRoutes.get(
     '/users/username/:username',
-    checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    checkUserOrServiceAuthentication,
+    hasRoleOrService(SystemRole.ADMIN),
     userController.getUserByUsername,
 );
 
@@ -80,8 +85,8 @@ userRoutes.delete(
 
 userRoutes.get(
     '/users/:id',
-    checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    checkUserOrServiceAuthentication,
+    hasRoleOrService(SystemRole.ADMIN),
     validateMongoId,
     userController.getUserById,
 );

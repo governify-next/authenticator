@@ -34,7 +34,7 @@ const ensureUserCanLogin = (user: IUser) => {
 
 const createAccessToken = (user: IUser) => {
     const options: jwt.SignOptions = {
-        expiresIn: bootEnv.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+        expiresIn: bootEnv.JWT_USER_EXPIRES_IN as jwt.SignOptions['expiresIn'],
         issuer: bootEnv.JWT_ISSUER,
         audience: bootEnv.JWT_AUDIENCE,
         subject: getUserId(user),
@@ -43,6 +43,7 @@ const createAccessToken = (user: IUser) => {
 
     return jwt.sign(
         {
+            type: 'user',
             userId: getUserId(user),
             username: user.username,
             systemRole: user.systemRole,

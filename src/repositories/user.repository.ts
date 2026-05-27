@@ -1,6 +1,7 @@
 import User, { IUser } from '../models/user.model.js';
 import { Types } from 'mongoose';
-
+import { SystemRole } from '../types/systemRole.js';
+import { UserStatus } from '../types/userStatus.js';
 import { DuplicateKeyError } from '../utils/customErrors.js';
 
 export const createUser = async (data: Partial<IUser>) => {
@@ -35,6 +36,23 @@ export const createUser = async (data: Partial<IUser>) => {
         }
         throw err;
     }
+};
+
+export const upsertDefaultAdminUser = async (username: string, password: string) => {
+    const defaultAdminUser = await User.findOneAndUpdate(
+        { username },
+        {
+            username,
+            password,
+            email: `${username}@authenticator.local`,
+            name: 'Default',
+            surname: 'Admin',
+            systemRole: SystemRole.ADMIN,
+            status: UserStatus.ACTIVE,
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true },
+    );
+    return defaultAdminUser;
 };
 
 export const getUsers = async () => {

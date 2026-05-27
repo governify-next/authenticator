@@ -2,7 +2,10 @@ import app from './app.js';
 import { getLogger } from './utils/logger.js';
 import { bootEnv } from './config/bootConfig.js';
 import { connectMongo } from './db/mongo.js';
-import { createDefaultAdminUser } from './services/bootstrap.service.js';
+import {
+    createDefaultAdminUser,
+    createDefaultServiceClients,
+} from './services/bootstrap.service.js';
 
 const logger = getLogger().setTag('server.ts');
 const PORT = bootEnv.PORT;
@@ -10,6 +13,7 @@ const PORT = bootEnv.PORT;
 connectMongo()
     .then(async () => {
         await createDefaultAdminUser();
+        await createDefaultServiceClients();
 
         app.listen(PORT, () => {
             logger.log(`Server running on http://localhost:${PORT}`);
