@@ -31,9 +31,76 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
-export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.updateUser(req.params.id, req.body);
+        const user = await userService.getUserByUsername(req.params.username);
+        if (!user) throw new NotFoundError('User not found');
+        return sendSuccess(res, { data: user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.getCurrentUser(req.userAuth!.userId);
+        return sendSuccess(res, { data: user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const getCurrentUserSessions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sessions = await userService.getCurrentUserSessions(req.userAuth!.userId);
+        return sendSuccess(res, { data: sessions });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteCurrentUserSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await userService.deleteCurrentUserSession(req.userAuth!.userId, req.params.id);
+        return sendSuccess(res, { data: null, message: 'Session deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteCurrentUserSessions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        await userService.deleteCurrentUserSessions(req.userAuth!.userId);
+        return sendSuccess(res, { data: null, message: 'Sessions deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const changeCurrentUserPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        await userService.changeCurrentUserPassword(
+            req.userAuth!.userId,
+            req.body.currentPassword,
+            req.body.newPassword,
+        );
+        return sendSuccess(res, { data: null, message: 'Password updated' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.updateUserById(req.params.id, req.body);
         if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: user, message: 'User updated' });
     } catch (err) {
@@ -41,11 +108,76 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
     }
 };
 
-export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.deleteUser(req.params.id);
+        const user = await userService.updateUserByUsername(req.params.username, req.body);
+        if (!user) throw new NotFoundError('User not found');
+        return sendSuccess(res, { data: user, message: 'User updated' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.deleteUserById(req.params.id);
         if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: null, message: 'User deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.deleteUserByUsername(req.params.username);
+        if (!user) throw new NotFoundError('User not found');
+        return sendSuccess(res, { data: null, message: 'User deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const login = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const session = await userService.login(req.body.login, req.body.password);
+        return sendSuccess(res, { data: session });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const session = await userService.refresh(req.body.refreshToken);
+        return sendSuccess(res, { data: session });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await userService.logout(req.body.refreshToken);
+        return sendSuccess(res, { data: null, message: 'User logged out' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const oidcLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const loginUrl = await userService.oidcLogin();
+        return sendSuccess(res, { data: { loginUrl } });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const oidcCallback = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const session = await userService.oidcCallback(req);
+        return sendSuccess(res, { data: session });
     } catch (err) {
         next(err);
     }
