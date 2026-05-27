@@ -1,6 +1,15 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { SystemRole } from '../types/systemRole.js';
+import { UserStatus } from '../types/userStatus.js';
+
+export interface IUserRefreshToken {
+    _id: Types.ObjectId;
+    tokenHash: string;
+    expiresAt: Date;
+    createdAt: Date;
+    lastUsedAt: Date;
+}
 
 export interface IUser extends Document {
     username: string;
@@ -9,6 +18,9 @@ export interface IUser extends Document {
     name: string;
     surname: string;
     systemRole: SystemRole;
+    status: UserStatus;
+    lastLoginAt?: Date;
+    refreshTokens?: IUserRefreshToken[];
     validatePassword(password: string): Promise<boolean>;
 }
 
@@ -20,6 +32,25 @@ const userSchema = new Schema<IUser>(
         name: { type: String, required: true },
         surname: { type: String, required: true },
         systemRole: { type: String, required: true, enum: Object.values(SystemRole) },
+        status: {
+            type: String,
+            required: true,
+            enum: Object.values(UserStatus),
+            default: UserStatus.ACTIVE,
+        },
+        lastLoginAt: { type: Date },
+        refreshTokens: {
+            type: [
+                {
+                    tokenHash: { type: String, required: true },
+                    expiresAt: { type: Date, required: true },
+                    createdAt: { type: Date, required: true, default: Date.now },
+                    lastUsedAt: { type: Date, required: true, default: Date.now },
+                },
+            ],
+            default: [],
+            select: false,
+        },
     },
     { timestamps: true },
 );

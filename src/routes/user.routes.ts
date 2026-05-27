@@ -4,6 +4,8 @@ import {
     validateCreateUser,
     validateUpdateUser,
     validateLogin,
+    validateRefreshToken,
+    validateChangePassword,
 } from '../middlewares/user.validator.js';
 import { validateOidcEnabled } from '../middlewares/oidc.validator.js';
 import { validateMongoId } from '../middlewares/mongoId.validator.js';
@@ -25,6 +27,33 @@ userRoutes.post(
     hasRole(SystemRole.ADMIN),
     validateCreateUser,
     userController.createUser,
+);
+
+userRoutes.get('/users/me', checkUserAuthentication, userController.getCurrentUser);
+
+userRoutes.put(
+    '/users/me/password',
+    checkUserAuthentication,
+    validateChangePassword,
+    userController.changeCurrentUserPassword,
+);
+
+userRoutes.get(
+    '/users/me/sessions',
+    checkUserAuthentication,
+    userController.getCurrentUserSessions,
+);
+
+userRoutes.delete(
+    '/users/me/sessions',
+    checkUserAuthentication,
+    userController.deleteCurrentUserSessions,
+);
+
+userRoutes.delete(
+    '/users/me/sessions/:id',
+    checkUserAuthentication,
+    userController.deleteCurrentUserSession,
 );
 
 userRoutes.get(
@@ -75,6 +104,10 @@ userRoutes.delete(
 );
 
 userRoutes.post('/users/login', validateLogin, userController.login);
+
+userRoutes.post('/users/refresh', validateRefreshToken, userController.refresh);
+
+userRoutes.post('/users/logout', validateRefreshToken, userController.logout);
 
 userRoutes.post('/users/oidc/login', validateOidcEnabled, userController.oidcLogin);
 

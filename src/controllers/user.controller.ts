@@ -41,6 +41,63 @@ export const getUserByUsername = async (req: Request, res: Response, next: NextF
     }
 };
 
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.getCurrentUser(req.userAuth!.userId);
+        return sendSuccess(res, { data: user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const getCurrentUserSessions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sessions = await userService.getCurrentUserSessions(req.userAuth!.userId);
+        return sendSuccess(res, { data: sessions });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteCurrentUserSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await userService.deleteCurrentUserSession(req.userAuth!.userId, req.params.id);
+        return sendSuccess(res, { data: null, message: 'Session deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteCurrentUserSessions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        await userService.deleteCurrentUserSessions(req.userAuth!.userId);
+        return sendSuccess(res, { data: null, message: 'Sessions deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const changeCurrentUserPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        await userService.changeCurrentUserPassword(
+            req.userAuth!.userId,
+            req.body.currentPassword,
+            req.body.newPassword,
+        );
+        return sendSuccess(res, { data: null, message: 'Password updated' });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.updateUserById(req.params.id, req.body);
@@ -83,8 +140,26 @@ export const deleteUserByUsername = async (req: Request, res: Response, next: Ne
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = await userService.login(req.body.login, req.body.password);
-        return sendSuccess(res, { data: { token } });
+        const session = await userService.login(req.body.login, req.body.password);
+        return sendSuccess(res, { data: session });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const session = await userService.refresh(req.body.refreshToken);
+        return sendSuccess(res, { data: session });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await userService.logout(req.body.refreshToken);
+        return sendSuccess(res, { data: null, message: 'User logged out' });
     } catch (err) {
         next(err);
     }
@@ -101,8 +176,8 @@ export const oidcLogin = async (req: Request, res: Response, next: NextFunction)
 
 export const oidcCallback = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = await userService.oidcCallback(req);
-        return sendSuccess(res, { data: { token } });
+        const session = await userService.oidcCallback(req);
+        return sendSuccess(res, { data: session });
     } catch (err) {
         next(err);
     }

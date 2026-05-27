@@ -2,9 +2,11 @@ import * as userRepository from '../repositories/user.repository.js';
 import jwt from 'jsonwebtoken';
 import { Request } from 'express';
 import { URL } from 'node:url';
+import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { IUser } from '../models/user.model.js';
+import { UserStatus } from '../types/userStatus.js';
 import * as oidc from 'openid-client';
-import { UnauthorizedError } from '../utils/customErrors.js';
+import { NotFoundError, UnauthorizedError } from '../utils/customErrors.js';
 import { bootEnv } from '../config/bootConfig.js';
 import { getLogger } from '../utils/logger.js';
 
@@ -18,6 +20,73 @@ if (bootEnv.OIDC_ENABLED) {
         bootEnv.OIDC_CLIENT_SECRET,
     );
 }
+
+const hashRefreshToken = (refreshToken: string) =>
+    createHash('sha256').update(refreshToken).digest('hex');
+
+const getUserId = (user: IUser) => String(user._id);
+
+const ensureUserCanLogin = (user: IUser) => {
+    if (user.status && user.status !== UserStatus.ACTIVE) {
+        throw new UnauthorizedError('User is not active');
+    }
+};
+
+const createAccessToken = (user: IUser) => {
+    const options: jwt.SignOptions = {
+        expiresIn: bootEnv.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+        issuer: bootEnv.JWT_ISSUER,
+        audience: bootEnv.JWT_AUDIENCE,
+        subject: getUserId(user),
+        jwtid: randomUUID(),
+    };
+
+    return jwt.sign(
+        {
+            userId: getUserId(user),
+            username: user.username,
+            systemRole: user.systemRole,
+        },
+        bootEnv.JWT_SECRET,
+        options,
+    );
+};
+
+const createRefreshTokenValue = () => randomBytes(48).toString('base64url');
+
+const createRefreshTokenExpiresAt = () =>
+    new Date(Date.now() + bootEnv.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000);
+
+const createRefreshToken = async (user: IUser) => {
+    const refreshToken = createRefreshTokenValue();
+    const refreshTokenExpiresAt = createRefreshTokenExpiresAt();
+
+    await userRepository.addRefreshToken(
+        getUserId(user),
+        hashRefreshToken(refreshToken),
+        refreshTokenExpiresAt,
+    );
+
+    const storedToken = await userRepository.getRefreshTokenByHash(hashRefreshToken(refreshToken));
+    if (!storedToken) throw new UnauthorizedError('Failed to create session');
+
+    return { refreshToken, sessionId: String(storedToken._id) };
+};
+
+const createSession = async (user: IUser, updateLastLoginAt = false) => {
+    ensureUserCanLogin(user);
+    const { refreshToken, sessionId } = await createRefreshToken(user);
+
+    if (updateLastLoginAt) {
+        await userRepository.updateLastLoginAt(getUserId(user));
+    }
+
+    return {
+        token: createAccessToken(user),
+        refreshToken,
+        sessionId,
+    };
+};
 
 export const createUser = async (data: Partial<IUser>) => {
     return await userRepository.createUser(data);
@@ -58,10 +127,90 @@ export const login = async (login: string, password: string) => {
     const isMatch = await user.validatePassword(password);
     if (!isMatch) throw new UnauthorizedError('Invalid password');
 
-    const { username, systemRole } = user;
-    const userId = user._id;
+    return await createSession(user, true);
+};
 
-    return jwt.sign({ userId, username, systemRole }, bootEnv.JWT_SECRET, { expiresIn: '1d' });
+export const refresh = async (refreshToken: string) => {
+    const currentRefreshTokenHash = hashRefreshToken(refreshToken);
+    const user = await userRepository.getUserByRefreshTokenHash(currentRefreshTokenHash);
+    if (!user) throw new UnauthorizedError('Invalid or expired refresh token');
+    ensureUserCanLogin(user);
+
+    const currentSession = user.refreshTokens?.find(
+        (storedToken) =>
+            storedToken.tokenHash === currentRefreshTokenHash && storedToken.expiresAt > new Date(),
+    );
+    if (!currentSession) throw new UnauthorizedError('Invalid or expired refresh token');
+
+    const nextRefreshToken = createRefreshTokenValue();
+    const updatedUser = await userRepository.rotateRefreshToken(
+        currentRefreshTokenHash,
+        hashRefreshToken(nextRefreshToken),
+        createRefreshTokenExpiresAt(),
+    );
+
+    if (!updatedUser) throw new UnauthorizedError('Invalid or expired refresh token');
+
+    return {
+        token: createAccessToken(user),
+        refreshToken: nextRefreshToken,
+        sessionId: String(currentSession._id),
+    };
+};
+
+export const logout = async (refreshToken: string) => {
+    const user = await userRepository.removeRefreshTokenByHash(hashRefreshToken(refreshToken));
+    if (!user) throw new UnauthorizedError('Invalid refresh token');
+};
+
+export const getCurrentUser = async (userId: string) => {
+    const user = await userRepository.getUserById(userId);
+    if (!user) throw new UnauthorizedError('User not found');
+    ensureUserCanLogin(user);
+
+    return user;
+};
+
+export const getCurrentUserSessions = async (userId: string) => {
+    await userRepository.cleanupExpiredRefreshTokens(userId);
+
+    const user = await userRepository.getUserWithRefreshTokens(userId);
+    if (!user) throw new UnauthorizedError('User not found');
+
+    return (user.refreshTokens || [])
+        .filter((session) => session.expiresAt > new Date())
+        .map((session) => ({
+            _id: String(session._id),
+            createdAt: session.createdAt,
+            lastUsedAt: session.lastUsedAt,
+            expiresAt: session.expiresAt,
+        }));
+};
+
+export const deleteCurrentUserSession = async (userId: string, refreshTokenId: string) => {
+    const user = await userRepository.removeRefreshTokenById(userId, refreshTokenId);
+    if (!user) throw new NotFoundError('Session not found');
+};
+
+export const deleteCurrentUserSessions = async (userId: string) => {
+    const user = await userRepository.removeAllRefreshTokens(userId);
+    if (!user) throw new UnauthorizedError('User not found');
+};
+
+export const changeCurrentUserPassword = async (
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+) => {
+    const user = await userRepository.getUserByIdWithPassword(userId);
+    if (!user) throw new UnauthorizedError('User not found');
+    ensureUserCanLogin(user);
+
+    const isCurrentPasswordValid = await user.validatePassword(currentPassword);
+    if (!isCurrentPasswordValid) throw new UnauthorizedError('Invalid current password');
+
+    await userRepository.updateUserById(userId, { password: newPassword });
+    await userRepository.removeAllRefreshTokens(userId);
 };
 
 export const oidcLogin = async () => {
@@ -98,8 +247,5 @@ export const oidcCallback = async (req: Request) => {
         throw new UnauthorizedError('No local user is associated with that email address');
     }
 
-    const { username, systemRole } = user;
-    const userId = user._id;
-
-    return jwt.sign({ userId, username, systemRole }, bootEnv.JWT_SECRET, { expiresIn: '1d' });
+    return await createSession(user, true);
 };

@@ -2,6 +2,7 @@ import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
 import { ValidationError } from '../utils/customErrors.js';
 import { SystemRole } from '../types/systemRole.js';
+import { UserStatus } from '../types/userStatus.js';
 import { getUserByUsername } from '../services/user.service.js';
 import { IUser } from '../models/user.model.js';
 
@@ -71,6 +72,10 @@ export const validateCreateUser = [
         .withMessage('System role is required')
         .isIn(Object.values(SystemRole))
         .withMessage(`System role must be one of: ${Object.values(SystemRole).join(', ')}`),
+    body('status')
+        .optional()
+        .isIn(Object.values(UserStatus))
+        .withMessage(`Status must be one of: ${Object.values(UserStatus).join(', ')}`),
     (req: Request, res: Response, next: NextFunction) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -108,6 +113,49 @@ export const validateUpdateUser = [
         .optional()
         .isIn(Object.values(SystemRole))
         .withMessage(`System role must be one of: ${Object.values(SystemRole).join(', ')}`),
+    body('status')
+        .optional()
+        .isIn(Object.values(UserStatus))
+        .withMessage(`Status must be one of: ${Object.values(UserStatus).join(', ')}`),
+    (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(new ValidationError('Validation failed', errors.array()));
+        }
+        next();
+    },
+];
+
+export const validateRefreshToken = [
+    body('refreshToken')
+        .exists({ checkNull: true })
+        .withMessage('Refresh token is required')
+        .isString()
+        .withMessage('Refresh token must be a string'),
+    (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(new ValidationError('Validation failed', errors.array()));
+        }
+        next();
+    },
+];
+
+export const validateChangePassword = [
+    body('currentPassword')
+        .exists({ checkNull: true })
+        .withMessage('Current password is required')
+        .isString()
+        .withMessage('Current password must be a string')
+        .isLength({ min: 6 })
+        .withMessage('Current password must be at least 6 characters long'),
+    body('newPassword')
+        .exists({ checkNull: true })
+        .withMessage('New password is required')
+        .isString()
+        .withMessage('New password must be a string')
+        .isLength({ min: 6 })
+        .withMessage('New password must be at least 6 characters long'),
     (req: Request, res: Response, next: NextFunction) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {

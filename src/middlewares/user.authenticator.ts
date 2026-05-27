@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { ForbiddenError, UnauthorizedError } from '../utils/customErrors.js';
 import { type Request, type Response, type NextFunction } from 'express';
-import { Types } from 'mongoose';
 import { getLogger } from '../utils/logger.js';
 import { SystemRole } from '../types/systemRole.js';
 import { bootEnv } from '../config/bootConfig.js';
@@ -17,9 +16,13 @@ declare module 'express' {
 }
 
 export interface UserJwtPayload {
-    userId: Types.ObjectId;
+    sub: string;
+    userId: string;
     username: string;
     systemRole: SystemRole;
+    iss: string;
+    aud: string;
+    jti: string;
 }
 
 export const checkUserAuthentication = (req: Request, res: Response, next: NextFunction) => {
@@ -30,7 +33,10 @@ export const checkUserAuthentication = (req: Request, res: Response, next: NextF
 
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as UserJwtPayload;
+        const decoded = jwt.verify(token, JWT_SECRET, {
+            issuer: bootEnv.JWT_ISSUER,
+            audience: bootEnv.JWT_AUDIENCE,
+        }) as UserJwtPayload;
 
         req.userAuth = decoded; // Attach UserJwtPayload to the Request for downstream use
         next();

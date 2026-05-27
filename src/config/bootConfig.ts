@@ -15,9 +15,17 @@ export const bootEnv = {
     // Database URIs
     MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/governify-next',
 
+    // Default admin user
+    DEFAULT_ADMIN_USERNAME: process.env.DEFAULT_ADMIN_USERNAME || 'admin',
+    DEFAULT_ADMIN_PASSWORD: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
+
     // JWT configuration
     USER_AUTHENTICATION_ENABLED: process.env.USER_AUTHENTICATION_ENABLED === 'true',
     JWT_SECRET: process.env.JWT_SECRET || 'governify_next_secret_key',
+    JWT_ISSUER: process.env.JWT_ISSUER || 'authenticator',
+    JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'governify-next',
+    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    REFRESH_TOKEN_DAYS: Number(process.env.REFRESH_TOKEN_DAYS || '7'),
 
     // OpenID Connect configuration
     OIDC_ENABLED: process.env.OIDC_ENABLED === 'true',

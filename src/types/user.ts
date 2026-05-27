@@ -1,4 +1,5 @@
 import { SystemRole } from './systemRole.js';
+import { UserStatus } from './userStatus.js';
 
 export type User = {
     username: string;
@@ -7,4 +8,6 @@ export type User = {
     name: string;
     surname: string;
     systemRole: SystemRole;
+    status: UserStatus;
+    lastLoginAt?: Date;
 };

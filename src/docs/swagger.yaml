@@ -100,6 +100,162 @@ paths:
                 '500':
                     $ref: '#/components/responses/InternalError'
 
+    /api/v1/users/me:
+        get:
+            tags:
+                - Users
+            summary: Get current user
+            operationId: getCurrentUser
+            security:
+                - BearerAuth: []
+            description: Returns the authenticated user from the access token.
+            responses:
+                '200':
+                    description: Current user found
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/User'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/users/me/password:
+        put:
+            tags:
+                - Users
+            summary: Change current user password
+            operationId: changeCurrentUserPassword
+            security:
+                - BearerAuth: []
+            description: |
+                Changes the authenticated user's password after validating the current password.
+                All active refresh-token sessions are deleted after a successful password change.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChangePasswordInput'
+            responses:
+                '200':
+                    description: Password updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: object
+                                              nullable: true
+                                              example: null
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/users/me/sessions:
+        get:
+            tags:
+                - Users
+            summary: List current user sessions
+            operationId: getCurrentUserSessions
+            security:
+                - BearerAuth: []
+            description: Returns the active refresh-token sessions for the authenticated user.
+            responses:
+                '200':
+                    description: Active sessions retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/UserSession'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+        delete:
+            tags:
+                - Users
+            summary: Delete all current user sessions
+            operationId: deleteCurrentUserSessions
+            security:
+                - BearerAuth: []
+            description: Deletes all active refresh-token sessions for the authenticated user.
+            responses:
+                '200':
+                    description: Sessions deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: object
+                                              nullable: true
+                                              example: null
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/users/me/sessions/{id}:
+        delete:
+            tags:
+                - Users
+            summary: Delete current user session
+            operationId: deleteCurrentUserSession
+            security:
+                - BearerAuth: []
+            description: Deletes one active refresh-token session for the authenticated user.
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+                  description: MongoDB ObjectId of the session to delete
+                  example: 665c2d3e4f5a6b7c8d9e0f1a
+            responses:
+                '200':
+                    description: Session deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: object
+                                              nullable: true
+                                              example: null
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '404':
+                    $ref: '#/components/responses/NotFound'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
     /api/v1/users/username/{username}:
         parameters:
             - in: path
@@ -333,7 +489,7 @@ paths:
             operationId: login
             description: |
                 Authenticates a user using their login credentials (username or email) and password.
-                Returns a JWT token upon successful authentication.
+                Returns a short-lived JWT access token and a refresh token.
             requestBody:
                 required: true
                 content:
@@ -342,7 +498,73 @@ paths:
                             $ref: '#/components/schemas/LoginInput'
             responses:
                 '200':
-                    description: Login successful. Returns a JWT token.
+                    description: Login successful. Returns an auth session.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/AuthSession'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/users/refresh:
+        post:
+            tags:
+                - Users
+            summary: Refresh auth session
+            operationId: refresh
+            description: |
+                Rotates a valid refresh token and returns a new auth session.
+                Other active refresh tokens for the same user remain valid.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RefreshTokenInput'
+            responses:
+                '200':
+                    description: Refresh successful. Returns a new auth session.
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              $ref: '#/components/schemas/AuthSession'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
+    /api/v1/users/logout:
+        post:
+            tags:
+                - Users
+            summary: Logout user session
+            operationId: logout
+            description: Deletes the session associated with the provided refresh token.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RefreshTokenInput'
+            responses:
+                '200':
+                    description: Session deleted successfully
                     content:
                         application/json:
                             schema:
@@ -352,11 +574,8 @@ paths:
                                       properties:
                                           data:
                                               type: object
-                                              properties:
-                                                  token:
-                                                      type: string
-                                                      description: JWT authentication token
-                                                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                                              nullable: true
+                                              example: null
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -403,7 +622,7 @@ paths:
             summary: Complete OIDC login
             operationId: oidcCallback
             description: |
-                Handles the OIDC provider callback and returns a JWT token for the associated local user.
+                Handles the OIDC provider callback and returns an auth session for the associated local user.
                 Requires OIDC to be enabled in the server configuration.
             parameters:
                 - in: query
@@ -420,7 +639,7 @@ paths:
                   description: OIDC state value returned by the provider, when present
             responses:
                 '200':
-                    description: OIDC login completed successfully. Returns a JWT token.
+                    description: OIDC login completed successfully. Returns an auth session.
                     content:
                         application/json:
                             schema:
@@ -429,12 +648,7 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              type: object
-                                              properties:
-                                                  token:
-                                                      type: string
-                                                      description: JWT authentication token
-                                                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                                              $ref: '#/components/schemas/AuthSession'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -448,7 +662,7 @@ components:
             type: http
             scheme: bearer
             bearerFormat: JWT
-            description: JWT token obtained via POST /api/v1/users/login
+            description: JWT access token obtained via POST /api/v1/users/login
 
     responses:
         ValidationError:
@@ -570,6 +784,14 @@ components:
                     type: string
                     enum: [ADMIN, USER]
                     example: ADMIN
+                status:
+                    type: string
+                    enum: [ACTIVE, DISABLED]
+                    example: ACTIVE
+                lastLoginAt:
+                    type: string
+                    format: date-time
+                    nullable: true
                 createdAt:
                     type: string
                     format: date-time
@@ -608,6 +830,11 @@ components:
                     type: string
                     enum: [ADMIN, USER]
                     example: ADMIN
+                status:
+                    type: string
+                    enum: [ACTIVE, DISABLED]
+                    description: Defaults to ACTIVE when omitted
+                    example: ACTIVE
 
         LoginInput:
             type: object
@@ -623,3 +850,60 @@ components:
                     type: string
                     format: password
                     example: securePassword123
+
+        RefreshTokenInput:
+            type: object
+            required:
+                - refreshToken
+            properties:
+                refreshToken:
+                    type: string
+                    example: YXaV2kVgE2seK9Yj4bVCx4NwS5wVwOfYp_8WQe7Ktb4
+
+        ChangePasswordInput:
+            type: object
+            required:
+                - currentPassword
+                - newPassword
+            properties:
+                currentPassword:
+                    type: string
+                    format: password
+                    example: currentPassword123
+                newPassword:
+                    type: string
+                    format: password
+                    example: newSecurePassword456
+
+        AuthSession:
+            type: object
+            properties:
+                token:
+                    type: string
+                    description: JWT access token with sub, iss, aud, exp and jti claims
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken:
+                    type: string
+                    description: Refresh token for one active user session
+                    example: YXaV2kVgE2seK9Yj4bVCx4NwS5wVwOfYp_8WQe7Ktb4
+                sessionId:
+                    type: string
+                    description: MongoDB ObjectId of the refresh-token session
+                    example: 665c2d3e4f5a6b7c8d9e0f1a
+
+        UserSession:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    description: MongoDB ObjectId of the refresh-token session
+                    example: 665c2d3e4f5a6b7c8d9e0f1a
+                createdAt:
+                    type: string
+                    format: date-time
+                lastUsedAt:
+                    type: string
+                    format: date-time
+                expiresAt:
+                    type: string
+                    format: date-time
