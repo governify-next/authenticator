@@ -9,6 +9,7 @@ import * as oidc from 'openid-client';
 import { NotFoundError, UnauthorizedError } from '../utils/customErrors.js';
 import { bootEnv } from '../config/bootConfig.js';
 import { getLogger } from '../utils/logger.js';
+import { createPagination } from '../utils/pagination.js';
 
 const logger = getLogger().setTag('user.service.ts');
 
@@ -89,12 +90,27 @@ const createSession = async (user: IUser, updateLastLoginAt = false) => {
     };
 };
 
+const getActiveSessions = (user: IUser) =>
+    (user.refreshTokens || [])
+        .filter((session) => session.expiresAt > new Date())
+        .map((session) => ({
+            _id: String(session._id),
+            createdAt: session.createdAt,
+            lastUsedAt: session.lastUsedAt,
+            expiresAt: session.expiresAt,
+        }));
+
 export const createUser = async (data: Partial<IUser>) => {
     return await userRepository.createUser(data);
 };
 
-export const getUsers = async () => {
-    return await userRepository.getUsers();
+export const getUsers = async (page: number, limit: number) => {
+    const { users, totalItems } = await userRepository.getUsers(page, limit);
+
+    return {
+        users,
+        pagination: createPagination(page, limit, totalItems),
+    };
 };
 
 export const getUserById = async (id: string) => {
@@ -119,6 +135,11 @@ export const deleteUserById = async (id: string) => {
 
 export const deleteUserByUsername = async (username: string) => {
     return await userRepository.deleteUserByUsername(username);
+};
+
+export const deleteUserSessionsById = async (id: string) => {
+    const user = await userRepository.removeAllRefreshTokens(id);
+    if (!user) throw new NotFoundError('User not found');
 };
 
 export const login = async (login: string, password: string) => {
@@ -178,14 +199,16 @@ export const getCurrentUserSessions = async (userId: string) => {
     const user = await userRepository.getUserWithRefreshTokens(userId);
     if (!user) throw new UnauthorizedError('User not found');
 
-    return (user.refreshTokens || [])
-        .filter((session) => session.expiresAt > new Date())
-        .map((session) => ({
-            _id: String(session._id),
-            createdAt: session.createdAt,
-            lastUsedAt: session.lastUsedAt,
-            expiresAt: session.expiresAt,
-        }));
+    return getActiveSessions(user);
+};
+
+export const getUserSessionsById = async (userId: string) => {
+    await userRepository.cleanupExpiredRefreshTokens(userId);
+
+    const user = await userRepository.getUserWithRefreshTokens(userId);
+    if (!user) throw new NotFoundError('User not found');
+
+    return getActiveSessions(user);
 };
 
 export const deleteCurrentUserSession = async (userId: string, refreshTokenId: string) => {

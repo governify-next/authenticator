@@ -55,8 +55,15 @@ export const upsertDefaultAdminUser = async (username: string, password: string)
     return defaultAdminUser;
 };
 
-export const getUsers = async () => {
-    return await User.find();
+export const getUsers = async (page: number, limit: number) => {
+    const skip = (page - 1) * limit;
+
+    const [users, totalItems] = await Promise.all([
+        User.find().skip(skip).limit(limit),
+        User.countDocuments(),
+    ]);
+
+    return { users, totalItems };
 };
 
 export const getUserById = async (id: string) => {

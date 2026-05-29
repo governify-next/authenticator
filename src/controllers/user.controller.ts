@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as userService from '../services/user.service.js';
 import { sendSuccess } from '../utils/standardResponse.js';
 import { NotFoundError } from '../utils/customErrors.js';
+import { getPaginationQuery } from '../utils/pagination.js';
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -14,8 +15,10 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const users = await userService.getUsers();
-        return sendSuccess(res, { data: users });
+        const { page, limit } = getPaginationQuery(req);
+        const { users, pagination } = await userService.getUsers(page, limit);
+
+        return sendSuccess(res, { data: users, pagination });
     } catch (err) {
         next(err);
     }
@@ -133,6 +136,24 @@ export const deleteUserByUsername = async (req: Request, res: Response, next: Ne
         const user = await userService.deleteUserByUsername(req.params.username);
         if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: null, message: 'User deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteUserSessionsById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await userService.deleteUserSessionsById(req.params.id);
+        return sendSuccess(res, { data: null, message: 'User sessions deleted' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const getUserSessionsById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sessions = await userService.getUserSessionsById(req.params.id);
+        return sendSuccess(res, { data: sessions });
     } catch (err) {
         next(err);
     }

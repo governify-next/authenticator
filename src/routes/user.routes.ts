@@ -62,6 +62,22 @@ userRoutes.delete(
 );
 
 userRoutes.get(
+    '/users/:id/sessions',
+    checkUserAuthentication,
+    hasRole(SystemRole.ADMIN),
+    validateMongoId,
+    userController.getUserSessionsById,
+);
+
+userRoutes.delete(
+    '/users/:id/sessions',
+    checkUserAuthentication,
+    hasRole(SystemRole.ADMIN),
+    validateMongoId,
+    userController.deleteUserSessionsById,
+);
+
+userRoutes.get(
     '/users/username/:username',
     checkUserOrServiceAuthentication,
     hasRoleOrService(SystemRole.ADMIN),
