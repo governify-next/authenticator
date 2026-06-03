@@ -24,6 +24,17 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
     }
 };
 
+export const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { page, limit } = getPaginationQuery(req);
+        const { users, pagination } = await userService.searchUsers(page, limit, req.body ?? {});
+
+        return sendSuccess(res, { data: users, pagination });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.getUserById(req.params.id);

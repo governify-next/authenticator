@@ -11,3 +11,11 @@ export type User = {
     status: UserStatus;
     lastLoginAt?: Date;
 };
+
+export type UserSearchFilters = {
+    usernameOrEmail?: string;
+    username?: string;
+    email?: string;
+    systemRole?: SystemRole;
+    status?: UserStatus;
+};

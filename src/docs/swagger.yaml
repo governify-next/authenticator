@@ -123,6 +123,74 @@ paths:
                 '500':
                     $ref: '#/components/responses/InternalError'
 
+    /api/v1/users/search:
+        post:
+            tags:
+                - Users
+            summary: Search users
+            operationId: searchUsers
+            security:
+                - BearerAuth: []
+            description: |
+                Returns a paginated list of users matching the provided filters.
+                Filters are combined when multiple fields are provided.
+                Requires a user token with ADMIN role.
+            parameters:
+                - in: query
+                  name: page
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 1
+                  description: Page number to retrieve
+                  example: 1
+                - in: query
+                  name: limit
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 20
+                  description: Number of users per page
+                  example: 20
+            requestBody:
+                required: false
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserSearchFilters'
+                        example:
+                            usernameOrEmail: john
+                            username: johndoe
+                            email: john@example.com
+                            systemRole: USER
+                            status: ACTIVE
+            responses:
+                '200':
+                    description: A paginated list of users matching the filters
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/User'
+                                          pagination:
+                                              $ref: '#/components/schemas/Pagination'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
+                '401':
+                    $ref: '#/components/responses/Unauthorized'
+                '403':
+                    $ref: '#/components/responses/Forbidden'
+                '500':
+                    $ref: '#/components/responses/InternalError'
+
     /api/v1/users/me:
         get:
             tags:
@@ -1073,6 +1141,30 @@ components:
                     type: string
                     enum: [ACTIVE, DISABLED]
                     description: Defaults to ACTIVE when omitted
+                    example: ACTIVE
+
+        UserSearchFilters:
+            type: object
+            properties:
+                usernameOrEmail:
+                    type: string
+                    description: Partial username or email match
+                    example: john
+                username:
+                    type: string
+                    description: Partial username match
+                    example: johndoe
+                email:
+                    type: string
+                    description: Partial email match
+                    example: john@example.com
+                systemRole:
+                    type: string
+                    enum: [ADMIN, USER]
+                    example: USER
+                status:
+                    type: string
+                    enum: [ACTIVE, DISABLED]
                     example: ACTIVE
 
         LoginInput:

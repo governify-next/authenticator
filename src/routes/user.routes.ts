@@ -6,6 +6,7 @@ import {
     validateLogin,
     validateRefreshToken,
     validateChangePassword,
+    validateSearchUsers,
 } from '../middlewares/user.validator.js';
 import { validateOidcEnabled } from '../middlewares/oidc.validator.js';
 import { validateMongoId } from '../middlewares/mongoId.validator.js';
@@ -32,6 +33,14 @@ userRoutes.post(
     hasRole(SystemRole.ADMIN),
     validateCreateUser,
     userController.createUser,
+);
+
+userRoutes.post(
+    '/users/search',
+    checkUserAuthentication,
+    hasRole(SystemRole.ADMIN),
+    validateSearchUsers,
+    userController.searchUsers,
 );
 
 userRoutes.get('/users/me', checkUserAuthentication, userController.getCurrentUser);

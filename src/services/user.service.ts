@@ -10,6 +10,7 @@ import { NotFoundError, UnauthorizedError } from '../utils/customErrors.js';
 import { bootEnv } from '../config/bootConfig.js';
 import { getLogger } from '../utils/logger.js';
 import { createPagination } from '../utils/pagination.js';
+import { type UserSearchFilters } from '../types/user.js';
 
 const logger = getLogger().setTag('user.service.ts');
 
@@ -106,6 +107,15 @@ export const createUser = async (data: Partial<IUser>) => {
 
 export const getUsers = async (page: number, limit: number) => {
     const { users, totalItems } = await userRepository.getUsers(page, limit);
+
+    return {
+        users,
+        pagination: createPagination(page, limit, totalItems),
+    };
+};
+
+export const searchUsers = async (page: number, limit: number, filters: UserSearchFilters) => {
+    const { users, totalItems } = await userRepository.searchUsers(page, limit, filters);
 
     return {
         users,

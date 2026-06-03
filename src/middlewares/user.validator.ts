@@ -126,6 +126,42 @@ export const validateUpdateUser = [
     },
 ];
 
+export const validateSearchUsers = [
+    body('usernameOrEmail')
+        .optional()
+        .isString()
+        .withMessage('Username or email filter must be a string')
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Username or email filter must be between 1 and 100 characters long'),
+    body('username')
+        .optional()
+        .isString()
+        .withMessage('Username filter must be a string')
+        .isLength({ min: 1, max: 50 })
+        .withMessage('Username filter must be between 1 and 50 characters long'),
+    body('email')
+        .optional()
+        .isString()
+        .withMessage('Email filter must be a string')
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Email filter must be between 1 and 100 characters long'),
+    body('systemRole')
+        .optional()
+        .isIn(Object.values(SystemRole))
+        .withMessage(`System role must be one of: ${Object.values(SystemRole).join(', ')}`),
+    body('status')
+        .optional()
+        .isIn(Object.values(UserStatus))
+        .withMessage(`Status must be one of: ${Object.values(UserStatus).join(', ')}`),
+    (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(new ValidationError('Validation failed', errors.array()));
+        }
+        next();
+    },
+];
+
 export const validateRefreshToken = [
     body('refreshToken')
         .exists({ checkNull: true })

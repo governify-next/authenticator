@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { SystemRole } from '../types/systemRole.js';
 import { UserStatus } from '../types/userStatus.js';
 import { DuplicateKeyError } from '../utils/customErrors.js';
+import { UserSearchFilters } from '../types/user.js';
 
 export const createUser = async (data: Partial<IUser>) => {
     try {
@@ -61,6 +62,35 @@ export const getUsers = async (page: number, limit: number) => {
     const [users, totalItems] = await Promise.all([
         User.find().skip(skip).limit(limit),
         User.countDocuments(),
+    ]);
+
+    return { users, totalItems };
+};
+
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const searchUsers = async (page: number, limit: number, filters: UserSearchFilters) => {
+    const skip = (page - 1) * limit;
+    const query: Record<string, unknown> = {};
+    if (filters.usernameOrEmail) {
+        const usernameOrEmailRegex = new RegExp(escapeRegex(filters.usernameOrEmail), 'i');
+        query.$or = [{ username: usernameOrEmailRegex }, { email: usernameOrEmailRegex }];
+    }
+    if (filters.username) {
+        query.username = new RegExp(escapeRegex(filters.username), 'i');
+    }
+    if (filters.email) {
+        query.email = new RegExp(escapeRegex(filters.email), 'i');
+    }
+    if (filters.systemRole) {
+        query.systemRole = filters.systemRole;
+    }
+    if (filters.status) {
+        query.status = filters.status;
+    }
+    const [users, totalItems] = await Promise.all([
+        User.find(query).skip(skip).limit(limit),
+        User.countDocuments(query),
     ]);
 
     return { users, totalItems };
