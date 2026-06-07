@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import { SystemRole } from '../types/systemRole.js';
 import { UserStatus } from '../types/userStatus.js';
 import { DuplicateKeyError } from '../utils/customErrors.js';
-import { UserSearchFilters } from '../types/user.js';
+import { type UserSearchFilters } from '../types/user.js';
 
 export const createUser = async (data: Partial<IUser>) => {
     try {
@@ -266,7 +266,15 @@ export const removeRefreshTokenById = async (userId: string, refreshTokenId: str
 };
 
 export const removeAllRefreshTokens = async (userId: string) => {
-    return await User.findByIdAndUpdate(userId, { $set: { refreshTokens: [] } }, { new: true });
+    const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: { refreshTokens: [] } },
+        { new: false },
+    ).select('+refreshTokens');
+
+    if (!user) return null;
+
+    return user.refreshTokens?.length ?? 0;
 };
 
 export const cleanupExpiredRefreshTokens = async (userId: string) => {

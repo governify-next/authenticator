@@ -3,16 +3,6 @@ import { type Request, type Response, type NextFunction } from 'express';
 import { ValidationError } from '../utils/customErrors.js';
 import { SystemRole } from '../types/systemRole.js';
 import { UserStatus } from '../types/userStatus.js';
-import { getUserByUsername } from '../services/user.service.js';
-import { IUser } from '../models/user.model.js';
-
-// Helper
-export async function getUserOrFail(username: string): Promise<IUser> {
-    const user = await getUserByUsername(username);
-
-    if (!user) throw new ValidationError(`${username} does not exist`);
-    return user;
-}
 
 const usernameValidation = (field: string) =>
     body(field)

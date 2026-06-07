@@ -246,9 +246,7 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              type: object
-                                              nullable: true
-                                              example: null
+                                              $ref: '#/components/schemas/User'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -303,8 +301,12 @@ paths:
                                       properties:
                                           data:
                                               type: object
-                                              nullable: true
-                                              example: null
+                                              properties:
+                                                  deletedSessions:
+                                                      type: integer
+                                                      minimum: 0
+                                                      description: Number of deleted sessions
+                                                      example: 2
                 '401':
                     $ref: '#/components/responses/Unauthorized'
                 '500':
@@ -339,8 +341,12 @@ paths:
                                       properties:
                                           data:
                                               type: object
-                                              nullable: true
-                                              example: null
+                                              properties:
+                                                  deletedSessions:
+                                                      type: integer
+                                                      minimum: 1
+                                                      description: Number of deleted sessions
+                                                      example: 1
                 '401':
                     $ref: '#/components/responses/Unauthorized'
                 '404':
@@ -423,8 +429,12 @@ paths:
                                       properties:
                                           data:
                                               type: object
-                                              nullable: true
-                                              example: null
+                                              properties:
+                                                  deletedSessions:
+                                                      type: integer
+                                                      minimum: 0
+                                                      description: Number of deleted sessions
+                                                      example: 2
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -534,9 +544,7 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              type: object
-                                              nullable: true
-                                              example: null
+                                              $ref: '#/components/schemas/User'
                 '401':
                     $ref: '#/components/responses/Unauthorized'
                 '403':
@@ -647,9 +655,7 @@ paths:
                                     - type: object
                                       properties:
                                           data:
-                                              type: object
-                                              nullable: true
-                                              example: null
+                                              $ref: '#/components/schemas/User'
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':
@@ -754,8 +760,10 @@ paths:
                                       properties:
                                           data:
                                               type: object
-                                              nullable: true
-                                              example: null
+                                              properties:
+                                                  loggedOut:
+                                                      type: boolean
+                                                      example: true
                 '400':
                     $ref: '#/components/responses/ValidationError'
                 '401':

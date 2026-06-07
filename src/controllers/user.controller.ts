@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as userService from '../services/user.service.js';
 import { sendSuccess } from '../utils/standardResponse.js';
-import { NotFoundError } from '../utils/customErrors.js';
 import { getPaginationQuery } from '../utils/pagination.js';
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,7 +37,6 @@ export const searchUsers = async (req: Request, res: Response, next: NextFunctio
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.getUserById(req.params.id);
-        if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: user });
     } catch (err) {
         next(err);
@@ -48,7 +46,6 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 export const getUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.getUserByUsername(req.params.username);
-        if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: user });
     } catch (err) {
         next(err);
@@ -75,8 +72,11 @@ export const getCurrentUserSessions = async (req: Request, res: Response, next: 
 
 export const deleteCurrentUserSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await userService.deleteCurrentUserSession(req.userAuth!.userId, req.params.id);
-        return sendSuccess(res, { data: null, message: 'Session deleted' });
+        const deletedSessions = await userService.deleteCurrentUserSession(
+            req.userAuth!.userId,
+            req.params.id,
+        );
+        return sendSuccess(res, { data: deletedSessions, message: 'Session deleted' });
     } catch (err) {
         next(err);
     }
@@ -88,8 +88,8 @@ export const deleteCurrentUserSessions = async (
     next: NextFunction,
 ) => {
     try {
-        await userService.deleteCurrentUserSessions(req.userAuth!.userId);
-        return sendSuccess(res, { data: null, message: 'Sessions deleted' });
+        const deletedSessions = await userService.deleteCurrentUserSessions(req.userAuth!.userId);
+        return sendSuccess(res, { data: deletedSessions, message: 'Sessions deleted' });
     } catch (err) {
         next(err);
     }
@@ -101,12 +101,12 @@ export const changeCurrentUserPassword = async (
     next: NextFunction,
 ) => {
     try {
-        await userService.changeCurrentUserPassword(
+        const user = await userService.changeCurrentUserPassword(
             req.userAuth!.userId,
             req.body.currentPassword,
             req.body.newPassword,
         );
-        return sendSuccess(res, { data: null, message: 'Password updated' });
+        return sendSuccess(res, { data: user, message: 'Password updated' });
     } catch (err) {
         next(err);
     }
@@ -115,7 +115,6 @@ export const changeCurrentUserPassword = async (
 export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.updateUserById(req.params.id, req.body);
-        if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: user, message: 'User updated' });
     } catch (err) {
         next(err);
@@ -125,7 +124,6 @@ export const updateUserById = async (req: Request, res: Response, next: NextFunc
 export const updateUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.updateUserByUsername(req.params.username, req.body);
-        if (!user) throw new NotFoundError('User not found');
         return sendSuccess(res, { data: user, message: 'User updated' });
     } catch (err) {
         next(err);
@@ -135,8 +133,7 @@ export const updateUserByUsername = async (req: Request, res: Response, next: Ne
 export const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.deleteUserById(req.params.id);
-        if (!user) throw new NotFoundError('User not found');
-        return sendSuccess(res, { data: null, message: 'User deleted' });
+        return sendSuccess(res, { data: user, message: 'User deleted' });
     } catch (err) {
         next(err);
     }
@@ -145,8 +142,7 @@ export const deleteUserById = async (req: Request, res: Response, next: NextFunc
 export const deleteUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userService.deleteUserByUsername(req.params.username);
-        if (!user) throw new NotFoundError('User not found');
-        return sendSuccess(res, { data: null, message: 'User deleted' });
+        return sendSuccess(res, { data: user, message: 'User deleted' });
     } catch (err) {
         next(err);
     }
@@ -154,8 +150,8 @@ export const deleteUserByUsername = async (req: Request, res: Response, next: Ne
 
 export const deleteUserSessionsById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await userService.deleteUserSessionsById(req.params.id);
-        return sendSuccess(res, { data: null, message: 'User sessions deleted' });
+        const deletedSessions = await userService.deleteUserSessionsById(req.params.id);
+        return sendSuccess(res, { data: deletedSessions, message: 'User sessions deleted' });
     } catch (err) {
         next(err);
     }
@@ -190,8 +186,8 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
 
 export const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await userService.logout(req.body.refreshToken);
-        return sendSuccess(res, { data: null, message: 'User logged out' });
+        const logoutResult = await userService.logout(req.body.refreshToken);
+        return sendSuccess(res, { data: logoutResult, message: 'User logged out' });
     } catch (err) {
         next(err);
     }

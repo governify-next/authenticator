@@ -76,13 +76,11 @@ const createRefreshToken = async (user: IUser) => {
     return { refreshToken, sessionId: String(storedToken._id) };
 };
 
-const createSession = async (user: IUser, updateLastLoginAt = false) => {
+const createSession = async (user: IUser) => {
     ensureUserCanLogin(user);
     const { refreshToken, sessionId } = await createRefreshToken(user);
 
-    if (updateLastLoginAt) {
-        await userRepository.updateLastLoginAt(getUserId(user));
-    }
+    await userRepository.updateLastLoginAt(getUserId(user));
 
     return {
         token: createAccessToken(user),
@@ -124,32 +122,52 @@ export const searchUsers = async (page: number, limit: number, filters: UserSear
 };
 
 export const getUserById = async (id: string) => {
-    return await userRepository.getUserById(id);
+    const user = await userRepository.getUserById(id);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const getUserByUsername = async (username: string) => {
-    return await userRepository.getUserByUsername(username);
+    const user = await userRepository.getUserByUsername(username);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const updateUserById = async (id: string, data: Partial<IUser>) => {
-    return await userRepository.updateUserById(id, data);
+    const user = await userRepository.updateUserById(id, data);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const updateUserByUsername = async (username: string, data: Partial<IUser>) => {
-    return await userRepository.updateUserByUsername(username, data);
+    const user = await userRepository.updateUserByUsername(username, data);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const deleteUserById = async (id: string) => {
-    return await userRepository.deleteUserById(id);
+    const user = await userRepository.deleteUserById(id);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const deleteUserByUsername = async (username: string) => {
-    return await userRepository.deleteUserByUsername(username);
+    const user = await userRepository.deleteUserByUsername(username);
+    if (!user) throw new NotFoundError('User not found');
+
+    return user;
 };
 
 export const deleteUserSessionsById = async (id: string) => {
-    const user = await userRepository.removeAllRefreshTokens(id);
-    if (!user) throw new NotFoundError('User not found');
+    const deletedSessions = await userRepository.removeAllRefreshTokens(id);
+    if (deletedSessions === null) throw new NotFoundError('User not found');
+
+    return { deletedSessions };
 };
 
 export const login = async (login: string, password: string) => {
@@ -159,7 +177,7 @@ export const login = async (login: string, password: string) => {
     const isMatch = await user.validatePassword(password);
     if (!isMatch) throw new UnauthorizedError('Invalid password');
 
-    return await createSession(user, true);
+    return await createSession(user);
 };
 
 export const refresh = async (refreshToken: string) => {
@@ -183,6 +201,8 @@ export const refresh = async (refreshToken: string) => {
 
     if (!updatedUser) throw new UnauthorizedError('Invalid or expired refresh token');
 
+    await userRepository.updateLastLoginAt(getUserId(user));
+
     return {
         token: createAccessToken(user),
         refreshToken: nextRefreshToken,
@@ -193,13 +213,13 @@ export const refresh = async (refreshToken: string) => {
 export const logout = async (refreshToken: string) => {
     const user = await userRepository.removeRefreshTokenByHash(hashRefreshToken(refreshToken));
     if (!user) throw new UnauthorizedError('Invalid refresh token');
+    return { loggedOut: true };
 };
 
 export const getCurrentUser = async (userId: string) => {
     const user = await userRepository.getUserById(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new NotFoundError('User not found');
     ensureUserCanLogin(user);
-
     return user;
 };
 
@@ -207,7 +227,7 @@ export const getCurrentUserSessions = async (userId: string) => {
     await userRepository.cleanupExpiredRefreshTokens(userId);
 
     const user = await userRepository.getUserWithRefreshTokens(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new NotFoundError('User not found');
 
     return getActiveSessions(user);
 };
@@ -224,11 +244,15 @@ export const getUserSessionsById = async (userId: string) => {
 export const deleteCurrentUserSession = async (userId: string, refreshTokenId: string) => {
     const user = await userRepository.removeRefreshTokenById(userId, refreshTokenId);
     if (!user) throw new NotFoundError('Session not found');
+
+    return { deletedSessions: 1 };
 };
 
 export const deleteCurrentUserSessions = async (userId: string) => {
-    const user = await userRepository.removeAllRefreshTokens(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    const deletedSessions = await userRepository.removeAllRefreshTokens(userId);
+    if (deletedSessions === null) throw new NotFoundError('User not found');
+
+    return { deletedSessions };
 };
 
 export const changeCurrentUserPassword = async (
@@ -237,14 +261,16 @@ export const changeCurrentUserPassword = async (
     newPassword: string,
 ) => {
     const user = await userRepository.getUserByIdWithPassword(userId);
-    if (!user) throw new UnauthorizedError('User not found');
+    if (!user) throw new NotFoundError('User not found');
     ensureUserCanLogin(user);
 
     const isCurrentPasswordValid = await user.validatePassword(currentPassword);
     if (!isCurrentPasswordValid) throw new UnauthorizedError('Invalid current password');
 
-    await userRepository.updateUserById(userId, { password: newPassword });
+    const updatedUser = await updateUserById(userId, { password: newPassword });
     await userRepository.removeAllRefreshTokens(userId);
+
+    return updatedUser;
 };
 
 export const oidcLogin = async () => {
@@ -281,5 +307,5 @@ export const oidcCallback = async (req: Request) => {
         throw new UnauthorizedError('No local user is associated with that email address');
     }
 
-    return await createSession(user, true);
+    return await createSession(user);
 };
