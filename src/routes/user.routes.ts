@@ -12,25 +12,26 @@ import { validateOidcEnabled } from '../middlewares/oidc.validator.js';
 import { validateMongoId } from '../middlewares/mongoId.validator.js';
 import {
     checkUserAuthentication,
-    checkUserOrServiceAuthentication,
-    hasRoleOrService,
-    hasRole,
+    checkServiceAuthentication,
+    hasSystemRole,
+    isService,
 } from '../middlewares/authenticator.validator.js';
 import { SystemRole } from '../types/systemRole.js';
+import { anyOf } from '../middlewares/anyof.validator.js';
 
 export const userRoutes = Router();
 
 userRoutes.get(
     '/users',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     userController.getUsers,
 );
 
 userRoutes.post(
     '/users',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateCreateUser,
     userController.createUser,
 );
@@ -38,7 +39,7 @@ userRoutes.post(
 userRoutes.post(
     '/users/search',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateSearchUsers,
     userController.searchUsers,
 );
@@ -73,7 +74,7 @@ userRoutes.delete(
 userRoutes.get(
     '/users/:id/sessions',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateMongoId,
     userController.getUserSessionsById,
 );
@@ -81,22 +82,22 @@ userRoutes.get(
 userRoutes.delete(
     '/users/:id/sessions',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateMongoId,
     userController.deleteUserSessionsById,
 );
 
 userRoutes.get(
     '/users/username/:username',
-    checkUserOrServiceAuthentication,
-    hasRoleOrService(SystemRole.ADMIN),
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    anyOf(hasSystemRole(SystemRole.ADMIN), isService),
     userController.getUserByUsername,
 );
 
 userRoutes.put(
     '/users/username/:username',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateUpdateUser,
     userController.updateUserByUsername,
 );
@@ -104,14 +105,14 @@ userRoutes.put(
 userRoutes.delete(
     '/users/username/:username',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     userController.deleteUserByUsername,
 );
 
 userRoutes.get(
     '/users/:id',
-    checkUserOrServiceAuthentication,
-    hasRoleOrService(SystemRole.ADMIN),
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    anyOf(hasSystemRole(SystemRole.ADMIN), isService),
     validateMongoId,
     userController.getUserById,
 );
@@ -119,7 +120,7 @@ userRoutes.get(
 userRoutes.put(
     '/users/:id',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateMongoId,
     validateUpdateUser,
     userController.updateUserById,
@@ -128,7 +129,7 @@ userRoutes.put(
 userRoutes.delete(
     '/users/:id',
     checkUserAuthentication,
-    hasRole(SystemRole.ADMIN),
+    hasSystemRole(SystemRole.ADMIN),
     validateMongoId,
     userController.deleteUserById,
 );

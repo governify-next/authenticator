@@ -63,7 +63,7 @@ export const validateCreateUser = [
         .isIn(Object.values(SystemRole))
         .withMessage(`System role must be one of: ${Object.values(SystemRole).join(', ')}`),
     body('status')
-        .optional()
+        .exists({ checkNull: true })
         .isIn(Object.values(UserStatus))
         .withMessage(`Status must be one of: ${Object.values(UserStatus).join(', ')}`),
     (req: Request, res: Response, next: NextFunction) => {

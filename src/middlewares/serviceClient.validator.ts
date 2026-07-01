@@ -30,7 +30,7 @@ const clientSecretValidation = (field: string) =>
         .isLength({ min: 12 })
         .withMessage('Client secret must be at least 12 characters long');
 
-export const validateServiceToken = [
+export const validateServiceTokenBody = [
     clientIdValidation('clientId'),
     clientSecretValidation('clientSecret'),
     validateRequest,

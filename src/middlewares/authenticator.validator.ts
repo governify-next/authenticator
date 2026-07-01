@@ -95,36 +95,7 @@ export const checkServiceAuthentication = (req: Request, res: Response, next: Ne
     }
 };
 
-export const checkUserOrServiceAuthentication = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => {
-    try {
-        const decoded = verifyToken(getBearerToken(req));
-
-        if (decoded.type === 'service') {
-            req.serviceAuth = decoded as ServiceJwtPayload;
-            return next();
-        }
-
-        if (decoded.type === 'user') {
-            req.userAuth = decoded as UserJwtPayload;
-            return next();
-        }
-
-        return next(new UnauthorizedError('Invalid token type'));
-    } catch (err) {
-        logger.debug('JWT verification failed', err);
-        next(
-            err instanceof UnauthorizedError
-                ? err
-                : new UnauthorizedError('Invalid or expired token'),
-        );
-    }
-};
-
-export const hasRole = (requiredRole: SystemRole) => {
+export const hasSystemRole = (requiredRole: SystemRole) => {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.userAuth) {
             return next(new UnauthorizedError('User not authenticated'));
@@ -139,21 +110,10 @@ export const hasRole = (requiredRole: SystemRole) => {
     };
 };
 
-export const hasRoleOrService = (requiredRole: SystemRole) => {
-    return (req: Request, res: Response, next: NextFunction) => {
-        if (req.serviceAuth) {
-            return next();
-        }
+export const isService = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.serviceAuth) {
+        return next(new UnauthorizedError('Service not authenticated'));
+    }
 
-        if (!req.userAuth) {
-            return next(new UnauthorizedError('User or service not authenticated'));
-        }
-
-        const userRole = req.userAuth.systemRole;
-        if (userRole !== requiredRole) {
-            return next(new ForbiddenError('Insufficient permissions'));
-        }
-
-        next();
-    };
+    next();
 };
