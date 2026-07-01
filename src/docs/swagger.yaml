@@ -51,7 +51,7 @@ paths:
                       type: integer
                       minimum: 1
                       default: 1
-                  description: Page number to retrieve
+                  description: Page number to retrieve. It must not exceed the available total pages.
                   example: 1
                 - in: query
                   name: limit
@@ -59,9 +59,10 @@ paths:
                   schema:
                       type: integer
                       minimum: 1
-                      default: 20
+                      maximum: 100
+                      default: 10
                   description: Number of users per page
-                  example: 20
+                  example: 10
             responses:
                 '200':
                     description: A paginated list of users
@@ -78,6 +79,8 @@ paths:
                                                   $ref: '#/components/schemas/User'
                                           pagination:
                                               $ref: '#/components/schemas/Pagination'
+                '400':
+                    $ref: '#/components/responses/ValidationError'
                 '401':
                     $ref: '#/components/responses/Unauthorized'
                 '403':
@@ -143,7 +146,7 @@ paths:
                       type: integer
                       minimum: 1
                       default: 1
-                  description: Page number to retrieve
+                  description: Page number to retrieve. It must not exceed the available total pages.
                   example: 1
                 - in: query
                   name: limit
@@ -151,9 +154,10 @@ paths:
                   schema:
                       type: integer
                       minimum: 1
-                      default: 20
+                      maximum: 100
+                      default: 10
                   description: Number of users per page
-                  example: 20
+                  example: 10
             requestBody:
                 required: false
                 content:
@@ -1058,10 +1062,13 @@ components:
             properties:
                 page:
                     type: integer
+                    minimum: 1
                     example: 1
                 limit:
                     type: integer
-                    example: 20
+                    minimum: 1
+                    maximum: 100
+                    example: 10
                 totalItems:
                     type: integer
                     example: 153
