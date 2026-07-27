@@ -5,6 +5,7 @@ export type User = {
     username: string;
     email: string;
     password: string;
+    createdBy?: string;
     name: string;
     surname: string;
     systemRole: SystemRole;

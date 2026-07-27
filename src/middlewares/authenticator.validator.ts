@@ -3,13 +3,15 @@ import { ForbiddenError, UnauthorizedError } from '../utils/customErrors.js';
 import { type Request, type Response, type NextFunction } from 'express';
 import { getLogger } from '../utils/logger.js';
 import { bootEnv } from '../config/bootConfig.js';
+import { SystemRole } from '../types/systemRole.js';
 
 const logger = getLogger().setTag('authenticator.validator.ts');
 
-enum SystemRole {
-    ADMIN = 'ADMIN',
-    USER = 'USER',
-}
+const systemRolePriority: Record<SystemRole, number> = {
+    [SystemRole.USER]: 1,
+    [SystemRole.ADMIN]: 2,
+    [SystemRole.SUPERADMIN]: 3,
+};
 
 declare module 'express' {
     interface Request {
@@ -102,7 +104,8 @@ export const hasSystemRole = (requiredRole: SystemRole) => {
         }
 
         const userRole = req.userAuth.systemRole;
-        if (userRole !== requiredRole) {
+        const userRolePriority = systemRolePriority[userRole];
+        if (!userRolePriority || userRolePriority < systemRolePriority[requiredRole]) {
             return next(new ForbiddenError('Insufficient permissions'));
         }
 

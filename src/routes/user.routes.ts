@@ -7,6 +7,7 @@ import {
     validateRefreshToken,
     validateChangePassword,
     validateSearchUsers,
+    canAssignUserSystemRole,
 } from '../middlewares/user.validator.js';
 import { validateOidcEnabled } from '../middlewares/oidc.validator.js';
 import { validateMongoId } from '../middlewares/mongoId.validator.js';
@@ -32,6 +33,7 @@ userRoutes.post(
     '/users',
     checkUserAuthentication,
     hasSystemRole(SystemRole.ADMIN),
+    canAssignUserSystemRole,
     validateCreateUser,
     userController.createUser,
 );
@@ -98,6 +100,7 @@ userRoutes.put(
     '/users/username/:username',
     checkUserAuthentication,
     hasSystemRole(SystemRole.ADMIN),
+    canAssignUserSystemRole,
     validateUpdateUser,
     userController.updateUserByUsername,
 );
@@ -122,6 +125,7 @@ userRoutes.put(
     checkUserAuthentication,
     hasSystemRole(SystemRole.ADMIN),
     validateMongoId,
+    canAssignUserSystemRole,
     validateUpdateUser,
     userController.updateUserById,
 );

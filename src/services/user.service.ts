@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Request } from 'express';
 import { URL } from 'node:url';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
+import { Types } from 'mongoose';
 import { IUser } from '../models/user.model.js';
 import { UserStatus } from '../types/userStatus.js';
 import * as oidc from 'openid-client';
@@ -11,6 +12,7 @@ import { bootEnv } from '../config/bootConfig.js';
 import { getLogger } from '../utils/logger.js';
 import { createPagination } from '../utils/pagination.js';
 import { type UserSearchFilters } from '../types/user.js';
+import { SystemRole } from '../types/systemRole.js';
 
 const logger = getLogger().setTag('user.service.ts');
 
@@ -99,12 +101,29 @@ const getActiveSessions = (user: IUser) =>
             expiresAt: session.expiresAt,
         }));
 
-export const createUser = async (data: Partial<IUser>) => {
-    return await userRepository.createUser(data);
+export const createUser = async (data: Partial<IUser>, createdBy: string) => {
+    return await userRepository.createUser({
+        ...data,
+        createdBy: new Types.ObjectId(createdBy),
+    });
 };
 
-export const getUsers = async (page: number, limit: number) => {
-    const { users, totalItems } = await userRepository.getUsers(page, limit);
+const getCreatedByScope = (requesterId?: string, requesterRole?: SystemRole) =>
+    requesterId && requesterRole && requesterRole !== SystemRole.SUPERADMIN
+        ? requesterId
+        : undefined;
+
+export const getUsers = async (
+    page: number,
+    limit: number,
+    requesterId: string,
+    requesterRole: SystemRole,
+) => {
+    const { users, totalItems } = await userRepository.getUsers(
+        page,
+        limit,
+        getCreatedByScope(requesterId, requesterRole),
+    );
 
     return {
         users,
@@ -112,8 +131,19 @@ export const getUsers = async (page: number, limit: number) => {
     };
 };
 
-export const searchUsers = async (page: number, limit: number, filters: UserSearchFilters) => {
-    const { users, totalItems } = await userRepository.searchUsers(page, limit, filters);
+export const searchUsers = async (
+    page: number,
+    limit: number,
+    filters: UserSearchFilters,
+    requesterId: string,
+    requesterRole: SystemRole,
+) => {
+    const { users, totalItems } = await userRepository.searchUsers(
+        page,
+        limit,
+        filters,
+        getCreatedByScope(requesterId, requesterRole),
+    );
 
     return {
         users,
@@ -121,43 +151,98 @@ export const searchUsers = async (page: number, limit: number, filters: UserSear
     };
 };
 
-export const getUserById = async (id: string) => {
-    const user = await userRepository.getUserById(id);
+export const getUserById = async (id: string, requesterId?: string, requesterRole?: SystemRole) => {
+    const user = await userRepository.getUserById(
+        id,
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;
 };
 
-export const getUserByUsername = async (username: string) => {
-    const user = await userRepository.getUserByUsername(username);
+export const getUserByUsername = async (
+    username: string,
+    requesterId?: string,
+    requesterRole?: SystemRole,
+) => {
+    const user = await userRepository.getUserByUsername(
+        username,
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;
 };
 
-export const updateUserById = async (id: string, data: Partial<IUser>) => {
-    const user = await userRepository.updateUserById(id, data);
+const pickUserUpdateData = (data: Partial<IUser>) => {
+    const updateData: Partial<IUser> = {};
+
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.password !== undefined) updateData.password = data.password;
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.surname !== undefined) updateData.surname = data.surname;
+    if (data.systemRole !== undefined) updateData.systemRole = data.systemRole;
+    if (data.status !== undefined) updateData.status = data.status;
+
+    return updateData;
+};
+
+export const updateUserById = async (
+    id: string,
+    data: Partial<IUser>,
+    requesterId?: string,
+    requesterRole?: SystemRole,
+) => {
+    const user = await userRepository.updateUserById(
+        id,
+        pickUserUpdateData(data),
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;
 };
 
-export const updateUserByUsername = async (username: string, data: Partial<IUser>) => {
-    const user = await userRepository.updateUserByUsername(username, data);
+export const updateUserByUsername = async (
+    username: string,
+    data: Partial<IUser>,
+    requesterId?: string,
+    requesterRole?: SystemRole,
+) => {
+    const user = await userRepository.updateUserByUsername(
+        username,
+        pickUserUpdateData(data),
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;
 };
 
-export const deleteUserById = async (id: string) => {
-    const user = await userRepository.deleteUserById(id);
+export const deleteUserById = async (
+    id: string,
+    requesterId?: string,
+    requesterRole?: SystemRole,
+) => {
+    const user = await userRepository.deleteUserById(
+        id,
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;
 };
 
-export const deleteUserByUsername = async (username: string) => {
-    const user = await userRepository.deleteUserByUsername(username);
+export const deleteUserByUsername = async (
+    username: string,
+    requesterId?: string,
+    requesterRole?: SystemRole,
+) => {
+    const user = await userRepository.deleteUserByUsername(
+        username,
+        getCreatedByScope(requesterId, requesterRole),
+    );
     if (!user) throw new NotFoundError('User not found');
 
     return user;

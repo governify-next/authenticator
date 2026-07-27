@@ -5,7 +5,7 @@ import { getPaginationQuery } from '../utils/pagination.js';
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.createUser(req.body);
+        const user = await userService.createUser(req.body, req.userAuth!.userId);
         return sendSuccess(res, { data: user, httpStatus: 201, message: 'User created' });
     } catch (err) {
         next(err);
@@ -15,7 +15,12 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { page, limit } = getPaginationQuery(req);
-        const { users, pagination } = await userService.getUsers(page, limit);
+        const { users, pagination } = await userService.getUsers(
+            page,
+            limit,
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
 
         return sendSuccess(res, { data: users, pagination });
     } catch (err) {
@@ -26,7 +31,13 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 export const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { page, limit } = getPaginationQuery(req);
-        const { users, pagination } = await userService.searchUsers(page, limit, req.body ?? {});
+        const { users, pagination } = await userService.searchUsers(
+            page,
+            limit,
+            req.body ?? {},
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
 
         return sendSuccess(res, { data: users, pagination });
     } catch (err) {
@@ -36,7 +47,11 @@ export const searchUsers = async (req: Request, res: Response, next: NextFunctio
 
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.getUserById(req.params.id);
+        const user = await userService.getUserById(
+            req.params.id,
+            req.userAuth?.userId,
+            req.userAuth?.systemRole,
+        );
         return sendSuccess(res, { data: user });
     } catch (err) {
         next(err);
@@ -45,7 +60,11 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 
 export const getUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.getUserByUsername(req.params.username);
+        const user = await userService.getUserByUsername(
+            req.params.username,
+            req.userAuth?.userId,
+            req.userAuth?.systemRole,
+        );
         return sendSuccess(res, { data: user });
     } catch (err) {
         next(err);
@@ -114,7 +133,12 @@ export const changeCurrentUserPassword = async (
 
 export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.updateUserById(req.params.id, req.body);
+        const user = await userService.updateUserById(
+            req.params.id,
+            req.body,
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
         return sendSuccess(res, { data: user, message: 'User updated' });
     } catch (err) {
         next(err);
@@ -123,7 +147,12 @@ export const updateUserById = async (req: Request, res: Response, next: NextFunc
 
 export const updateUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.updateUserByUsername(req.params.username, req.body);
+        const user = await userService.updateUserByUsername(
+            req.params.username,
+            req.body,
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
         return sendSuccess(res, { data: user, message: 'User updated' });
     } catch (err) {
         next(err);
@@ -132,7 +161,11 @@ export const updateUserByUsername = async (req: Request, res: Response, next: Ne
 
 export const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.deleteUserById(req.params.id);
+        const user = await userService.deleteUserById(
+            req.params.id,
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
         return sendSuccess(res, { data: user, message: 'User deleted' });
     } catch (err) {
         next(err);
@@ -141,7 +174,11 @@ export const deleteUserById = async (req: Request, res: Response, next: NextFunc
 
 export const deleteUserByUsername = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.deleteUserByUsername(req.params.username);
+        const user = await userService.deleteUserByUsername(
+            req.params.username,
+            req.userAuth!.userId,
+            req.userAuth!.systemRole,
+        );
         return sendSuccess(res, { data: user, message: 'User deleted' });
     } catch (err) {
         next(err);

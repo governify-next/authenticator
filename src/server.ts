@@ -3,7 +3,7 @@ import { getLogger } from './utils/logger.js';
 import { bootEnv } from './config/bootConfig.js';
 import { connectMongo } from './db/mongo.js';
 import {
-    createDefaultAdminUser,
+    createDefaultSuperAdminUser,
     createDefaultServiceClients,
 } from './services/bootstrap.service.js';
 
@@ -12,7 +12,7 @@ const PORT = bootEnv.PORT;
 
 connectMongo()
     .then(async () => {
-        await createDefaultAdminUser();
+        await createDefaultSuperAdminUser();
         await createDefaultServiceClients();
 
         app.listen(PORT, () => {

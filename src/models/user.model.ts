@@ -15,6 +15,7 @@ export interface IUser extends Document {
     username: string;
     email: string;
     password: string;
+    createdBy?: Types.ObjectId;
     name: string;
     surname: string;
     systemRole: SystemRole;
@@ -29,6 +30,7 @@ const userSchema = new Schema<IUser>(
         username: { type: String, required: true, unique: true },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true, select: false },
+        createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
         name: { type: String, required: true },
         surname: { type: String, required: true },
         systemRole: { type: String, required: true, enum: Object.values(SystemRole) },
