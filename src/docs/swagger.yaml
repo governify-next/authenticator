@@ -36,13 +36,14 @@ paths:
         get:
             tags:
                 - Users
-            summary: List all users
+            summary: List users
             operationId: getUsers
             security:
                 - BearerAuth: []
             description: |
-                Returns an array with all users in the system.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users can list all users in the system.
+                ADMIN users can only list users they created.
+                Requires a user token with ADMIN or SUPERADMIN role.
             parameters:
                 - in: query
                   name: page
@@ -96,7 +97,8 @@ paths:
                 - BearerAuth: []
             description: |
                 Creates a new user with the provided credentials.
-                Requires a user token with ADMIN role.
+                Only a SUPERADMIN can create another SUPERADMIN.
+                Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
                 content:
@@ -137,7 +139,9 @@ paths:
             description: |
                 Returns a paginated list of users matching the provided filters.
                 Filters are combined when multiple fields are provided.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users search across all users in the system.
+                ADMIN users only search among users they created.
+                Requires a user token with ADMIN or SUPERADMIN role.
             parameters:
                 - in: query
                   name: page
@@ -368,7 +372,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns the active refresh-token sessions for the user with the provided MongoDB ObjectId.
-                Requires a user token with ADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             parameters:
                 - in: path
                   name: id
@@ -411,7 +415,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Deletes all refresh-token sessions for the user with the provided MongoDB ObjectId.
-                Requires a user token with ADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             parameters:
                 - in: path
                   name: id
@@ -468,7 +472,8 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns a specific user by their username.
-                Requires a user token with ADMIN role or a valid service token.
+                SUPERADMIN users have global access; ADMIN users can only access users they created.
+                Requires a user token with ADMIN or SUPERADMIN role or a valid service token.
             responses:
                 '200':
                     description: User found
@@ -498,7 +503,9 @@ paths:
                 - BearerAuth: []
             description: |
                 Updates an existing user's information by username.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users have global access; ADMIN users can only update users they created.
+                Only a SUPERADMIN can assign the SUPERADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
                 content:
@@ -536,7 +543,8 @@ paths:
                 - BearerAuth: []
             description: |
                 Deletes a user from the system by username.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users have global access; ADMIN users can only delete users they created.
+                Requires a user token with ADMIN or SUPERADMIN role.
             responses:
                 '200':
                     description: User deleted successfully
@@ -577,7 +585,8 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns a specific user by their MongoDB ObjectId.
-                Requires a user token with ADMIN role or a valid service token.
+                SUPERADMIN users have global access; ADMIN users can only access users they created.
+                Requires a user token with ADMIN or SUPERADMIN role or a valid service token.
             responses:
                 '200':
                     description: User found
@@ -609,7 +618,9 @@ paths:
                 - BearerAuth: []
             description: |
                 Updates an existing user's information by MongoDB ObjectId.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users have global access; ADMIN users can only update users they created.
+                Only a SUPERADMIN can assign the SUPERADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
                 content:
@@ -647,7 +658,8 @@ paths:
                 - BearerAuth: []
             description: |
                 Deletes a user from the system by MongoDB ObjectId.
-                Requires a user token with ADMIN role.
+                SUPERADMIN users have global access; ADMIN users can only delete users they created.
+                Requires a user token with ADMIN or SUPERADMIN role.
             responses:
                 '200':
                     description: User deleted successfully
@@ -891,7 +903,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns all service clients.
-                Requires a user token with ADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             responses:
                 '200':
                     description: A list of service clients
@@ -931,7 +943,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Returns one service client by its client id.
-                Requires a user token with ADMIN role.
+                Requires a user token with ADMIN or SUPERADMIN role.
             responses:
                 '200':
                     description: Service client found
@@ -1089,6 +1101,10 @@ components:
                     type: string
                     description: MongoDB ObjectId
                     example: 665c2d3e4f5a6b7c8d9e0f1a
+                createdBy:
+                    type: string
+                    description: MongoDB ObjectId of the user that created this user
+                    example: 665c2d3e4f5a6b7c8d9e0f1b
                 username:
                     type: string
                     example: johndoe
@@ -1104,7 +1120,7 @@ components:
                     example: Doe
                 systemRole:
                     type: string
-                    enum: [ADMIN, USER]
+                    enum: [SUPERADMIN, ADMIN, USER]
                     example: ADMIN
                 status:
                     type: string
@@ -1150,7 +1166,7 @@ components:
                     example: Doe
                 systemRole:
                     type: string
-                    enum: [ADMIN, USER]
+                    enum: [SUPERADMIN, ADMIN, USER]
                     example: ADMIN
                 status:
                     type: string
@@ -1175,7 +1191,7 @@ components:
                     example: john@example.com
                 systemRole:
                     type: string
-                    enum: [ADMIN, USER]
+                    enum: [SUPERADMIN, ADMIN, USER]
                     example: USER
                 status:
                     type: string

@@ -15,9 +15,9 @@ export const bootEnv = {
     // Database URIs
     MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/governify-next',
 
-    // Default admin user
-    DEFAULT_ADMIN_USERNAME: process.env.DEFAULT_ADMIN_USERNAME || 'admin',
-    DEFAULT_ADMIN_PASSWORD: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
+    // Default superadmin user
+    DEFAULT_SUPERADMIN_USERNAME: process.env.DEFAULT_SUPERADMIN_USERNAME || 'superadmin',
+    DEFAULT_SUPERADMIN_PASSWORD: process.env.DEFAULT_SUPERADMIN_PASSWORD || 'superadmin123',
 
     // Default service clients
     SCOPE_MANAGER_CLIENT_SECRET:
@@ -34,7 +34,7 @@ export const bootEnv = {
     JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'governify-next',
     JWT_USER_EXPIRES_IN: process.env.JWT_USER_EXPIRES_IN || '15m',
     JWT_USER_REFRESH_TOKEN_DAYS: Number(process.env.JWT_USER_REFRESH_TOKEN_DAYS || '7'),
-    JWT_SERVICE_EXPIRES_IN: process.env.JWT_SERVICE_EXPIRES_IN || '15m',
+    JWT_SERVICE_EXPIRES_IN: process.env.JWT_SERVICE_EXPIRES_IN || '9999999m',
 
     // OpenID Connect configuration
     OIDC_ENABLED: process.env.OIDC_ENABLED === 'true',

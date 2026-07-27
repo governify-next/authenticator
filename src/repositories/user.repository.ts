@@ -39,29 +39,39 @@ export const createUser = async (data: Partial<IUser>) => {
     }
 };
 
-export const upsertDefaultAdminUser = async (username: string, password: string) => {
-    const defaultAdminUser = await User.findOneAndUpdate(
+export const upsertDefaultSuperAdminUser = async (username: string, password: string) => {
+    const defaultSuperAdminUser = await User.findOneAndUpdate(
         { username },
         {
             username,
             password,
             email: `${username}@authenticator.local`,
             name: 'Default',
-            surname: 'Admin',
-            systemRole: SystemRole.ADMIN,
+            surname: 'SuperAdmin',
+            systemRole: SystemRole.SUPERADMIN,
             status: UserStatus.ACTIVE,
         },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
-    return defaultAdminUser;
+
+    if (!defaultSuperAdminUser.createdBy) {
+        return await User.findByIdAndUpdate(
+            defaultSuperAdminUser._id,
+            { createdBy: defaultSuperAdminUser._id },
+            { new: true },
+        );
+    }
+
+    return defaultSuperAdminUser;
 };
 
-export const getUsers = async (page: number, limit: number) => {
+export const getUsers = async (page: number, limit: number, createdBy?: string) => {
     const skip = (page - 1) * limit;
+    const query = createdBy ? { createdBy } : {};
 
     const [users, totalItems] = await Promise.all([
-        User.find().skip(skip).limit(limit),
-        User.countDocuments(),
+        User.find(query).skip(skip).limit(limit),
+        User.countDocuments(query),
     ]);
 
     return { users, totalItems };
@@ -69,7 +79,12 @@ export const getUsers = async (page: number, limit: number) => {
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const searchUsers = async (page: number, limit: number, filters: UserSearchFilters) => {
+export const searchUsers = async (
+    page: number,
+    limit: number,
+    filters: UserSearchFilters,
+    createdBy?: string,
+) => {
     const skip = (page - 1) * limit;
     const query: Record<string, unknown> = {};
     if (filters.usernameOrEmail) {
@@ -88,6 +103,9 @@ export const searchUsers = async (page: number, limit: number, filters: UserSear
     if (filters.status) {
         query.status = filters.status;
     }
+    if (createdBy) {
+        query.createdBy = createdBy;
+    }
     const [users, totalItems] = await Promise.all([
         User.find(query).skip(skip).limit(limit),
         User.countDocuments(query),
@@ -96,16 +114,16 @@ export const searchUsers = async (page: number, limit: number, filters: UserSear
     return { users, totalItems };
 };
 
-export const getUserById = async (id: string) => {
-    return await User.findById(id);
+export const getUserById = async (id: string, createdBy?: string) => {
+    return await User.findOne({ _id: id, ...(createdBy ? { createdBy } : {}) });
 };
 
 export const getUserByIdWithPassword = async (id: string) => {
     return await User.findById(id).select('+password');
 };
 
-export const getUserByUsername = async (username: string) => {
-    return await User.findOne({ username });
+export const getUserByUsername = async (username: string, createdBy?: string) => {
+    return await User.findOne({ username, ...(createdBy ? { createdBy } : {}) });
 };
 
 export const getUserByEmail = async (email: string) => {
@@ -127,9 +145,11 @@ export const getUserWithRefreshTokens = async (id: string) => {
     return await User.findById(id).select('+refreshTokens');
 };
 
-export const updateUserById = async (id: string, data: Partial<IUser>) => {
+export const updateUserById = async (id: string, data: Partial<IUser>, createdBy?: string) => {
     try {
-        return await User.findByIdAndUpdate(id, data, { new: true });
+        return await User.findOneAndUpdate({ _id: id, ...(createdBy ? { createdBy } : {}) }, data, {
+            new: true,
+        });
     } catch (err) {
         const e = err as {
             code?: number;
@@ -154,9 +174,17 @@ export const updateUserById = async (id: string, data: Partial<IUser>) => {
     }
 };
 
-export const updateUserByUsername = async (username: string, data: Partial<IUser>) => {
+export const updateUserByUsername = async (
+    username: string,
+    data: Partial<IUser>,
+    createdBy?: string,
+) => {
     try {
-        return await User.findOneAndUpdate({ username }, data, { new: true });
+        return await User.findOneAndUpdate(
+            { username, ...(createdBy ? { createdBy } : {}) },
+            data,
+            { new: true },
+        );
     } catch (err) {
         const e = err as {
             code?: number;
@@ -181,12 +209,12 @@ export const updateUserByUsername = async (username: string, data: Partial<IUser
     }
 };
 
-export const deleteUserById = async (id: string) => {
-    return await User.findByIdAndDelete(id);
+export const deleteUserById = async (id: string, createdBy?: string) => {
+    return await User.findOneAndDelete({ _id: id, ...(createdBy ? { createdBy } : {}) });
 };
 
-export const deleteUserByUsername = async (username: string) => {
-    return await User.findOneAndDelete({ username });
+export const deleteUserByUsername = async (username: string, createdBy?: string) => {
+    return await User.findOneAndDelete({ username, ...(createdBy ? { createdBy } : {}) });
 };
 
 export const addRefreshToken = async (

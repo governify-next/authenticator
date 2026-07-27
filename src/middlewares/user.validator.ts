@@ -1,6 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import { type Request, type Response, type NextFunction } from 'express';
-import { ValidationError } from '../utils/customErrors.js';
+import { ForbiddenError, UnauthorizedError, ValidationError } from '../utils/customErrors.js';
 import { SystemRole } from '../types/systemRole.js';
 import { UserStatus } from '../types/userStatus.js';
 
@@ -216,3 +216,18 @@ export const validateLogin = [
         next();
     },
 ];
+
+export const canAssignUserSystemRole = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.userAuth) {
+        return next(new UnauthorizedError('User not authenticated'));
+    }
+
+    if (
+        req.body?.systemRole === SystemRole.SUPERADMIN &&
+        req.userAuth.systemRole !== SystemRole.SUPERADMIN
+    ) {
+        return next(new ForbiddenError('Only a superadmin can assign the SUPERADMIN role'));
+    }
+
+    next();
+};

@@ -14,18 +14,18 @@ const defaultServiceClients = [
     { clientId: 'director', clientSecret: bootEnv.DIRECTOR_CLIENT_SECRET },
 ];
 
-export const createDefaultAdminUser = async () => {
-    const username = bootEnv.DEFAULT_ADMIN_USERNAME;
-    const password = bootEnv.DEFAULT_ADMIN_PASSWORD;
+export const createDefaultSuperAdminUser = async () => {
+    const username = bootEnv.DEFAULT_SUPERADMIN_USERNAME;
+    const password = bootEnv.DEFAULT_SUPERADMIN_PASSWORD;
 
     if (!username || !password) {
-        logger.info('Default admin user not configured');
+        logger.info('Default superadmin user not configured');
         return;
     }
 
-    await userRepository.upsertDefaultAdminUser(username, password);
+    await userRepository.upsertDefaultSuperAdminUser(username, password);
 
-    logger.info(`Default admin user '${username}' ready`);
+    logger.info(`Default superadmin user '${username}' ready`);
 };
 
 export const createDefaultServiceClients = async () => {
