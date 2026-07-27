@@ -223,10 +223,11 @@ export const canAssignUserSystemRole = (req: Request, res: Response, next: NextF
     }
 
     if (
-        req.body?.systemRole === SystemRole.SUPERADMIN &&
+        req.body?.systemRole !== undefined &&
+        req.body.systemRole !== SystemRole.USER &&
         req.userAuth.systemRole !== SystemRole.SUPERADMIN
     ) {
-        return next(new ForbiddenError('Only a superadmin can assign the SUPERADMIN role'));
+        return next(new ForbiddenError('An admin can only assign the USER role'));
     }
 
     next();

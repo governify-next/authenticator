@@ -97,7 +97,7 @@ paths:
                 - BearerAuth: []
             description: |
                 Creates a new user with the provided credentials.
-                Only a SUPERADMIN can create another SUPERADMIN.
+                ADMIN users can only assign the USER role; SUPERADMIN users can assign any valid role.
                 Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
@@ -504,7 +504,7 @@ paths:
             description: |
                 Updates an existing user's information by username.
                 SUPERADMIN users have global access; ADMIN users can only update users they created.
-                Only a SUPERADMIN can assign the SUPERADMIN role.
+                ADMIN users can only assign the USER role; SUPERADMIN users can assign any valid role.
                 Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
@@ -619,7 +619,7 @@ paths:
             description: |
                 Updates an existing user's information by MongoDB ObjectId.
                 SUPERADMIN users have global access; ADMIN users can only update users they created.
-                Only a SUPERADMIN can assign the SUPERADMIN role.
+                ADMIN users can only assign the USER role; SUPERADMIN users can assign any valid role.
                 Requires a user token with ADMIN or SUPERADMIN role.
             requestBody:
                 required: true
