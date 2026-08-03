@@ -12,6 +12,7 @@ const defaultServiceClients = [
     { clientId: 'fetcher', clientSecret: bootEnv.FETCHER_CLIENT_SECRET },
     { clientId: 'reporter', clientSecret: bootEnv.REPORTER_CLIENT_SECRET },
     { clientId: 'director', clientSecret: bootEnv.DIRECTOR_CLIENT_SECRET },
+    { clientId: 'join-backend', clientSecret: bootEnv.JOIN_BACKEND_CLIENT_SECRET },
 ];
 
 export const createDefaultSuperAdminUser = async () => {

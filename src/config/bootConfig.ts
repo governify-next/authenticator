@@ -27,6 +27,8 @@ export const bootEnv = {
     FETCHER_CLIENT_SECRET: process.env.FETCHER_CLIENT_SECRET || 'fetcher_client_secret',
     REPORTER_CLIENT_SECRET: process.env.REPORTER_CLIENT_SECRET || 'reporter_client_secret',
     DIRECTOR_CLIENT_SECRET: process.env.DIRECTOR_CLIENT_SECRET || 'director_client_secret',
+    JOIN_BACKEND_CLIENT_SECRET:
+        process.env.JOIN_BACKEND_CLIENT_SECRET || 'join_backend_client_secret',
 
     // JWT configuration
     JWT_SECRET: process.env.JWT_SECRET || 'governify_next_secret_key',
