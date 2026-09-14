@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { StdError } from './customErrors.js';
+import { Pagination } from './pagination.js';
 
 type NormalizedError = {
     message: string;
@@ -27,11 +28,13 @@ export function sendSuccess(
     res: Response,
     {
         data,
+        pagination,
         message = 'OK',
         httpStatus = 200,
         appCode = 'SUCCESS',
     }: {
         data: unknown;
+        pagination?: Pagination;
         message?: string;
         httpStatus?: number;
         appCode?: string;
@@ -43,6 +46,7 @@ export function sendSuccess(
         httpStatus,
         appCode,
         data,
+        ...(pagination ? { pagination } : {}),
         error: null,
     };
     return res.status(httpStatus).json(response);
