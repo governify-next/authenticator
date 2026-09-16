@@ -2,10 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import * as userService from '../services/user.service.js';
 import { sendSuccess } from '../utils/standardResponse.js';
 import { getPaginationQuery } from '../utils/pagination.js';
+import { ValidationError } from '../utils/customErrors.js';
+import { Types } from 'mongoose';
+
+const resolveCreatedBy = (req: Request, serviceCreatedBy: unknown = req.body.createdBy) => {
+    const createdBy = req.userAuth?.userId ?? serviceCreatedBy;
+    if (typeof createdBy !== 'string' || !Types.ObjectId.isValid(createdBy)) {
+        throw new ValidationError('A valid createdBy user is required');
+    }
+    return createdBy;
+};
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userService.createUser(req.body, req.userAuth!.userId);
+        const userId = resolveCreatedBy(req);
+        const user = await userService.createUser(req.body, userId);
         return sendSuccess(res, { data: user, httpStatus: 201, message: 'User created' });
     } catch (err) {
         next(err);

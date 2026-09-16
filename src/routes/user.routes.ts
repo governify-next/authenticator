@@ -31,8 +31,8 @@ userRoutes.get(
 
 userRoutes.post(
     '/users',
-    checkUserAuthentication,
-    hasSystemRole(SystemRole.ADMIN),
+    anyOf(checkUserAuthentication, checkServiceAuthentication),
+    anyOf(hasSystemRole(SystemRole.ADMIN), isService),
     canAssignUserSystemRole,
     validateCreateUser,
     userController.createUser,
