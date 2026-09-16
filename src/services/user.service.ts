@@ -101,7 +101,7 @@ const getActiveSessions = (user: IUser) =>
             expiresAt: session.expiresAt,
         }));
 
-export const createUser = async (data: Partial<IUser>, createdBy: string) => {
+export const createUser = async (data: Partial<IUser>, createdBy?: string) => {
     return await userRepository.createUser({
         ...data,
         createdBy: new Types.ObjectId(createdBy),
