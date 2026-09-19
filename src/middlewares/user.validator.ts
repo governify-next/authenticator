@@ -218,16 +218,16 @@ export const validateLogin = [
 ];
 
 export const canAssignUserSystemRole = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.userAuth) {
-        return next(new UnauthorizedError('User not authenticated'));
+    if (!req.userAuth && !req.serviceAuth) {
+        return next(new UnauthorizedError('User or service not authenticated'));
     }
 
     if (
         req.body?.systemRole !== undefined &&
         req.body.systemRole !== SystemRole.USER &&
-        req.userAuth.systemRole !== SystemRole.SUPERADMIN
+        ((req.userAuth && req.userAuth.systemRole !== SystemRole.SUPERADMIN) || req.serviceAuth)
     ) {
-        return next(new ForbiddenError('An admin can only assign the USER role'));
+        return next(new ForbiddenError('An admin or service can only assign the USER role'));
     }
 
     next();
