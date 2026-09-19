@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/governify-next/authenticator/compare/v1.1.0...v1.2.0) (2026-09-19)
+
+
+### Features
+
+* extend user creation to allow automatic creation by services ([bcefda5](https://github.com/governify-next/authenticator/commit/bcefda588ccd863f78f1153022faf03e72891833))
+* extend user creation to allow automatic creation by services ([f25fdad](https://github.com/governify-next/authenticator/commit/f25fdad53ae9c02a6f312c9b2eecb591d5b5f9ac))
+
+
+### Bug Fixes
+
+* new version ([2d819a7](https://github.com/governify-next/authenticator/commit/2d819a78f03088689671ba8771c12ccae6a1d132))
+
 ## 1.1.0 (2026-09-14)
 
 ### Features
