@@ -1,3 +1,4 @@
+import { oasTelemetry } from '@oas-tools/oas-telemetry';
 import app from './app.js';
 import { getLogger } from './utils/logger.js';
 import { bootEnv } from './config/bootConfig.js';
@@ -6,6 +7,8 @@ import {
     createDefaultSuperAdminUser,
     createDefaultServiceClients,
 } from './services/bootstrap.service.js';
+
+app.use(oasTelemetry());
 
 const logger = getLogger().setTag('server.ts');
 const PORT = bootEnv.PORT;
