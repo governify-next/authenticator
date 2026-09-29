@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/governify-next/authenticator/compare/v1.2.0...v1.3.0) (2026-09-29)
+
+
+### Features
+
+* add @oas-tools/oas-telemetry for enhanced telemetry support ([d660611](https://github.com/governify-next/authenticator/commit/d66061137f4b47e7162cd7025c0520dd481e67f3))
+* add @oas-tools/oas-telemetry for enhanced telemetry support ([6cf9cf3](https://github.com/governify-next/authenticator/commit/6cf9cf3a7b24ee762f8bb95bf77bfec291f88cca))
+
 ## [1.2.0](https://github.com/governify-next/authenticator/compare/v1.1.0...v1.2.0) (2026-09-19)
 
 
