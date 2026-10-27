@@ -70,7 +70,7 @@ export const getUsers = async (page: number, limit: number, createdBy?: string) 
     const query = createdBy ? { createdBy } : {};
 
     const [users, totalItems] = await Promise.all([
-        User.find(query).skip(skip).limit(limit),
+        User.find(query).skip(skip).limit(limit).populate('createdBy', 'username'),
         User.countDocuments(query),
     ]);
 
@@ -107,7 +107,7 @@ export const searchUsers = async (
         query.createdBy = createdBy;
     }
     const [users, totalItems] = await Promise.all([
-        User.find(query).skip(skip).limit(limit),
+        User.find(query).skip(skip).limit(limit).populate('createdBy', 'username'),
         User.countDocuments(query),
     ]);
 
